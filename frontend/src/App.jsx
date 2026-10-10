@@ -6,6 +6,7 @@ import Plan from './pages/Plan.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Flights from './pages/Flights.jsx'
 import Hotels from './pages/Hotels.jsx'
+import Transport from './pages/Transport.jsx'
 
 // Temporary page for routes that are built later in the schedule.
 function UnderConstruction({ title }) {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/plan" element={<Plan />} />
           <Route path="/trips/:tripId" element={<Dashboard />} />
           <Route path="/flights" element={<Flights />} />
+          <Route path="/transport" element={<Transport />} />
           <Route path="/hotels" element={<Hotels />} />
           <Route path="/privacy" element={<UnderConstruction title="Privacy Policy" />} />
           <Route path="/terms" element={<UnderConstruction title="Terms and Conditions" />} />

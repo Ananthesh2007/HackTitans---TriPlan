@@ -1,5 +1,10 @@
 import mockTrip from './mockTrip.js'
-import { mockFlightResults, mockHotelResults, mockModifyTrip } from './mockActions.js'
+import {
+  mockFlightResults,
+  mockHotelResults,
+  mockModifyTrip,
+  mockTransportResults,
+} from './mockActions.js'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -69,9 +74,17 @@ function assertTrip(trip) {
 export async function createTrip(tripRequest) {
   if (isMockMode) {
     await wait(800)
-    // Sample data, but it uses the budget typed in the form so the budget card can be tested.
+    // Sample data, but it uses some values typed in the form so the budget card and the
+    // booking options can be tested: budget, travellers, starting place, and travel date.
     const budget = Number(tripRequest?.budget)
-    return { ...mockTrip, budget: budget > 0 ? budget : mockTrip.budget }
+    const people = Number(tripRequest?.people)
+    return {
+      ...mockTrip,
+      budget: budget > 0 ? budget : mockTrip.budget,
+      people: Number.isInteger(people) && people > 0 ? people : mockTrip.people,
+      origin: tripRequest?.origin || null,
+      travel_date: tripRequest?.travel_date || null,
+    }
   }
   const trip = await request('/api/trips', {
     method: 'POST',
@@ -137,5 +150,17 @@ export async function searchHotels(params) {
   }
   return assertResults(
     await request('/api/hotels/search', { method: 'POST', body: JSON.stringify(params) }),
+  )
+}
+
+// POST /api/transport/search (buses and trains)
+// params: { mode: 'bus' | 'train', origin, destination, date, passengers }
+export async function searchTransport(params) {
+  if (isMockMode) {
+    await wait(700)
+    return mockTransportResults(params.mode)
+  }
+  return assertResults(
+    await request('/api/transport/search', { method: 'POST', body: JSON.stringify(params) }),
   )
 }

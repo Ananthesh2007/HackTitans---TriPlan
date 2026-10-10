@@ -21,6 +21,7 @@ const DIETS = [
 const FIELD_ORDER = ['destination', 'travelDate', 'days', 'people', 'budget']
 
 const INITIAL_VALUES = {
+  origin: '',
   destination: '',
   travelDate: '',
   days: '3',
@@ -133,7 +134,9 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
     }
 
     // Same field names as docs/api-contract.md
+    const origin = values.origin.trim()
     onSubmit({
+      ...(origin ? { origin } : {}),
       destination: values.destination.trim(),
       days: Number(values.days),
       budget: Number(values.budget),
@@ -146,6 +149,17 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      <Field id="origin" label="Travelling from (optional)">
+        <input
+          type="text"
+          placeholder="For example, Bengaluru"
+          autoComplete="off"
+          maxLength={80}
+          className={inputClass(false)}
+          {...fieldProps('origin')}
+        />
+      </Field>
+
       <Field id="destination" label="Destination" error={errors.destination}>
         <input
           type="text"

@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom'
 const links = [
   { to: '/plan', label: 'Plan a trip' },
   { to: '/flights', label: 'Flights' },
+  { to: '/transport', label: 'Buses and trains' },
   { to: '/hotels', label: 'Hotels' },
 ]
 
@@ -13,7 +14,7 @@ export default function Navbar() {
         <Link to="/" className="font-serif text-xl font-semibold text-ink">
           TriPlan
         </Link>
-        <ul className="flex items-center gap-4 text-sm sm:gap-6 sm:text-base">
+        <ul className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm sm:gap-x-6 sm:text-base">
           {links.map(({ to, label }) => (
             <li key={to}>
               <NavLink

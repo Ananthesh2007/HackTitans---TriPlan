@@ -11,6 +11,7 @@ Creates a trip and returns the generated itinerary.
 
 ```json
 {
+  "origin": "Bengaluru",
   "destination": "Coorg",
   "days": 3,
   "budget": 15000,
@@ -21,6 +22,8 @@ Creates a trip and returns the generated itinerary.
 }
 ```
 
+`origin` is optional and is left out when the user does not enter it.
+
 ### Success response (200)
 
 The frontend sample in `frontend/src/services/mockTrip.js` is the reference shape.
@@ -28,7 +31,9 @@ The frontend sample in `frontend/src/services/mockTrip.js` is the reference shap
 | Field | Type | Notes |
 | --- | --- | --- |
 | trip_id | string | Used in the route /trips/:tripId |
+| origin | string | Optional. Echo of the request. Used to fill in the booking pages. |
 | destination | string | |
+| travel_date | string | YYYY-MM-DD. Echo of the request. Used to fill in the booking pages. |
 | days | number | |
 | people | number | |
 | budget | number | The user's budget |
@@ -43,6 +48,69 @@ The frontend sample in `frontend/src/services/mockTrip.js` is the reference shap
 ```json
 { "error": { "code": "invalid_input", "message": "Destination is required." } }
 ```
+
+## POST /api/trips/{trip_id}/modify
+
+Asks the assistant to change a plan. The response is a PROPOSED plan. The frontend shows
+what would change and only replaces the current plan when the user chooses Apply.
+
+Request:
+
+```json
+{ "message": "Make this trip cheaper", "current_trip": { "...": "the full current trip" } }
+```
+
+`current_trip` is sent so the backend does not need to have saved the trip. The backend
+may ignore it if it stores trips.
+
+Success response (200):
+
+```json
+{ "reply": "I removed one activity to lower the cost.", "trip": { "...": "full trip, same shape as above" } }
+```
+
+## POST /api/flights/search
+
+Request: `{ "origin": "Bengaluru", "destination": "Goa", "date": "2026-11-20", "passengers": 2 }`
+
+Response: `{ "results": [ ... ] }`. Each result:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | string | Unique within the response |
+| airline | string | |
+| departure_time, arrival_time | string | Shown as received, for example "06:30" |
+| duration | string | For example "2h 15m" |
+| stops | number | 0 means non-stop |
+| price | number | Per person |
+| currency | string | For example "INR" |
+| booking_url | string or null | Must be an https URL. Anything else is ignored. |
+
+An empty `results` array is a valid answer (the page shows "No flights found").
+
+## POST /api/transport/search
+
+Buses and trains. Request:
+`{ "mode": "bus", "origin": "Bengaluru", "destination": "Madikeri", "date": "2026-11-20", "passengers": 2 }`
+where `mode` is `bus` or `train`.
+
+Response: `{ "results": [ ... ] }`. Each result: `id`, `operator`, `vehicle_type` (optional, for
+example "AC sleeper"), `departure_time`, `arrival_time`, `duration`, `price` (per person),
+`currency`, `booking_url` (https URL or null).
+
+## POST /api/hotels/search
+
+Request: `{ "destination": "Goa", "check_in": "2026-11-20", "check_out": "2026-11-23", "guests": 2 }`
+
+Response: `{ "results": [ ... ] }`. Each result: `id`, `name`, `area` (optional),
+`price_per_night` (number), `currency`, `booking_url` (https URL or null).
+
+## Notes for all endpoints
+
+- Allowed values for `diet` in the trip request: `none`, `vegetarian`, `vegan`, `non-vegetarian`.
+- `estimated_costs` may also include an optional `flights` number.
+- The backend must allow requests from the frontend origin (CORS).
+- Sample responses set `"is_mock": true`. The frontend labels these as sample data.
 
 ## Open questions
 

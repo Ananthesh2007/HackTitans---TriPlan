@@ -1,14 +1,26 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import Field, { inputClass } from '../components/Field.jsx'
 import ResultsPanel from '../components/ResultsPanel.jsx'
 import BookLink from '../components/BookLink.jsx'
 import { useSearch } from '../hooks/useSearch.js'
 import { searchFlights } from '../services/api.js'
 import { todayString } from '../utils/dates.js'
+import { cleanCount, cleanDate, cleanText } from '../utils/queryPrefill.js'
 import { formatMoney } from '../utils/format.js'
 
 const FIELD_ORDER = ['origin', 'destination', 'date', 'passengers']
-const INITIAL_VALUES = { origin: '', destination: '', date: '', passengers: '1' }
+
+// Starting values can come from the page address, for example /flights?from=Pune&to=Goa
+function initialValues(search) {
+  const params = new URLSearchParams(search)
+  return {
+    origin: cleanText(params.get('from')),
+    destination: cleanText(params.get('to')),
+    date: cleanDate(params.get('date')),
+    passengers: String(cleanCount(params.get('passengers'), 1, 9, 1)),
+  }
+}
 
 function validate(values) {
   const errors = {}
@@ -44,7 +56,8 @@ function stopsText(stops) {
 }
 
 export default function Flights() {
-  const [values, setValues] = useState(INITIAL_VALUES)
+  const { search: queryString } = useLocation()
+  const [values, setValues] = useState(() => initialValues(queryString))
   const [errors, setErrors] = useState({})
   const [search, runSearch, retrySearch] = useSearch(searchFlights)
   const isSearching = search.status === 'loading'

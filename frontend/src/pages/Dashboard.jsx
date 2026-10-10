@@ -4,6 +4,7 @@ import { getTrip } from '../services/api.js'
 import ItineraryCard from '../components/ItineraryCard.jsx'
 import BudgetCard from '../components/BudgetCard.jsx'
 import ChatAssistant from '../components/ChatAssistant.jsx'
+import BookingOptions from '../components/BookingOptions.jsx'
 
 function TripLoader({ tripId, initialTrip }) {
   const [state, setState] = useState(
@@ -86,7 +87,10 @@ function TripLoader({ tripId, initialTrip }) {
         {trip.people === 1 ? 'traveller' : 'travellers'}
       </p>
       <p className="mt-1 text-sm text-muted">Costs are estimates, not confirmed prices.</p>
-      <p className="mt-3">
+      <p className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
+        <a href="#booking" className="text-brand underline">
+          Book flights, buses, trains, and hotels
+        </a>
         <a href="#assistant" className="text-brand underline">
           Ask the assistant to change this plan
         </a>
@@ -100,6 +104,10 @@ function TripLoader({ tripId, initialTrip }) {
         {trip.itinerary.map((day) => (
           <ItineraryCard key={day.day} day={day} currency={trip.currency} />
         ))}
+      </div>
+
+      <div id="booking" className="mt-12 border-t border-line pt-8">
+        <BookingOptions trip={trip} />
       </div>
 
       <div id="assistant" className="mt-12 border-t border-line pt-8">
