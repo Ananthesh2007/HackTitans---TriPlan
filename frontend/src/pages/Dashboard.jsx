@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'react-router-dom'
 import { getTrip } from '../services/api.js'
 import ItineraryCard from '../components/ItineraryCard.jsx'
 import BudgetCard from '../components/BudgetCard.jsx'
+import ChatAssistant from '../components/ChatAssistant.jsx'
 
 function TripLoader({ tripId, initialTrip }) {
   const [state, setState] = useState(
@@ -30,6 +31,11 @@ function TripLoader({ tripId, initialTrip }) {
       cancelled = true
     }
   }, [tripId, attempt, initialTrip])
+
+  // Called when the user applies a change proposed by the assistant.
+  function handleApply(trip) {
+    setState({ status: 'ready', trip, message: '' })
+  }
 
   function handleRetry() {
     setState({ status: 'loading', trip: null, message: '' })
@@ -80,6 +86,11 @@ function TripLoader({ tripId, initialTrip }) {
         {trip.people === 1 ? 'traveller' : 'travellers'}
       </p>
       <p className="mt-1 text-sm text-muted">Costs are estimates, not confirmed prices.</p>
+      <p className="mt-3">
+        <a href="#assistant" className="text-brand underline">
+          Ask the assistant to change this plan
+        </a>
+      </p>
 
       <div className="mt-8">
         <BudgetCard budget={trip.budget} costs={trip.estimated_costs} currency={trip.currency} />
@@ -89,6 +100,10 @@ function TripLoader({ tripId, initialTrip }) {
         {trip.itinerary.map((day) => (
           <ItineraryCard key={day.day} day={day} currency={trip.currency} />
         ))}
+      </div>
+
+      <div id="assistant" className="mt-12 border-t border-line pt-8">
+        <ChatAssistant trip={trip} onApply={handleApply} />
       </div>
     </section>
   )

@@ -1,4 +1,5 @@
 import mockTrip from './mockTrip.js'
+import { mockFlightResults, mockHotelResults, mockModifyTrip } from './mockActions.js'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -87,4 +88,54 @@ export async function getTrip(tripId) {
   }
   const trip = await request(`/api/trips/${encodeURIComponent(tripId)}`)
   return assertTrip(trip)
+}
+
+// POST /api/trips/{trip_id}/modify
+// Returns { reply, trip }, where trip is the PROPOSED plan. The page lets the user
+// review it before it replaces the current plan.
+export async function modifyTrip(tripId, message, currentTrip) {
+  if (isMockMode) {
+    await wait(700)
+    return mockModifyTrip(currentTrip)
+  }
+  const data = await request(`/api/trips/${encodeURIComponent(tripId)}/modify`, {
+    method: 'POST',
+    body: JSON.stringify({ message, current_trip: currentTrip }),
+  })
+  return {
+    reply: typeof data?.reply === 'string' ? data.reply : '',
+    trip: assertTrip(data?.trip),
+  }
+}
+
+function assertResults(data) {
+  if (!data || !Array.isArray(data.results)) {
+    throw new Error('The server sent results we could not read. Try again.')
+  }
+  return {
+    is_mock: Boolean(data.is_mock),
+    results: data.results.filter((item) => item && typeof item === 'object'),
+  }
+}
+
+// POST /api/flights/search
+export async function searchFlights(params) {
+  if (isMockMode) {
+    await wait(700)
+    return mockFlightResults()
+  }
+  return assertResults(
+    await request('/api/flights/search', { method: 'POST', body: JSON.stringify(params) }),
+  )
+}
+
+// POST /api/hotels/search
+export async function searchHotels(params) {
+  if (isMockMode) {
+    await wait(700)
+    return mockHotelResults()
+  }
+  return assertResults(
+    await request('/api/hotels/search', { method: 'POST', body: JSON.stringify(params) }),
+  )
 }
