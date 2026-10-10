@@ -24,8 +24,8 @@ const INITIAL_VALUES = {
   origin: '',
   destination: '',
   travelDate: '',
-  days: '3',
-  people: '1',
+  days: '',
+  people: '',
   budget: '',
   interests: [],
   diet: 'none',
@@ -149,7 +149,7 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      <Field id="origin" label="Travelling from (optional)">
+      <Field id="origin" label="Travelling from">
         <input
           type="text"
           placeholder="For example, Bengaluru"
