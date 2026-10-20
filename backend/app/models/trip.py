@@ -13,7 +13,8 @@ Diet = Literal["none", "vegetarian", "vegan", "non-vegetarian"]
 
 # ---------- Request: POST /api/trips ----------
 class TripRequest(BaseModel):
-    origin: Place
+    # Optional: the frontend omits it when "Travelling from" is left blank.
+    origin: Place | None = None
     destination: Place
     days: int = Field(ge=1, le=30)
     budget: float = Field(gt=0, le=100_000_000)
@@ -62,8 +63,15 @@ class Trip(BaseModel):
     people: int = Field(ge=1)
     budget: float = Field(gt=0)
     currency: str = "INR"
+    # Kept so the AI can modify a trip without losing the user's preferences.
+    interests: list[Interest] = Field(default_factory=list, max_length=8)
+    diet: Diet = "none"
     estimated_costs: EstimatedCosts | None = None
     itinerary: list[DayPlan]
+    # Set when the AI provider was unavailable, so the frontend can say so.
+    warning: str | None = None
+    # Set by modify_itinerary with the assistant's short reply.
+    reply: str | None = None
 
 
 # ---------- POST /api/trips/{trip_id}/modify ----------
@@ -74,4 +82,4 @@ class ModifyRequest(BaseModel):
 
 class ModifyResponse(BaseModel):
     reply: str
-    trip: Trip  # the PROPOSED plan; the user must choose Apply in the frontend
+    trip: Trip  # the PROPOSED plan; the user must choose Apply in the frontend# 19-10-2026 — Input limits added (max_length=80 for places, le=30 days, etc.)

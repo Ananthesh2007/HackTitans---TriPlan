@@ -1,3 +1,26 @@
-.venv/
-__pycache__/
+# Secrets and local settings. Never commit these.
 .env
+.env.local
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local database (trip data is regenerated, never committed)
+data/
+*.db
+
+# OS
+.DS_Store
+Thumbs.db

@@ -102,7 +102,7 @@ function TripLoader({ tripId, initialTrip }) {
 
       <div className="mt-10 space-y-10">
         {trip.itinerary.map((day) => (
-          <ItineraryCard key={day.day} day={day} currency={trip.currency} />
+          <ItineraryCard key={day.day} day={day} currency={trip.currency} people={trip.people} />
         ))}
       </div>
 

@@ -403,7 +403,7 @@ Use deterministic backend code for calculations and validation. The AI can decid
     {
       "origin": "Mangalore",
       "destination": "New York",
-      "departure_date": "2026-11-20",
+      "date": "2026-11-20",
       "passengers": 1
     }
 

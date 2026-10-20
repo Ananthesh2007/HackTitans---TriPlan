@@ -1,8 +1,11 @@
 import { formatMoney } from '../utils/format.js'
 
 // Shows one day of the itinerary: title, activities, times, places, and estimated costs.
-export default function ItineraryCard({ day, currency }) {
+export default function ItineraryCard({ day, currency, people = 1 }) {
   const dayTotal = day.activities.reduce((sum, activity) => sum + activity.estimated_cost, 0)
+  // The budget card shows group totals, so this card shows them too. Without
+  // this the two panels on the dashboard disagree about the same costs.
+  const groupTotal = dayTotal * people
 
   return (
     <article className="border-t border-line pt-4">
@@ -11,7 +14,8 @@ export default function ItineraryCard({ day, currency }) {
           Day {day.day}: {day.title}
         </h2>
         <p className="text-sm text-muted">
-          Estimated activities cost: {formatMoney(dayTotal, currency)}
+          Estimated activities cost: {formatMoney(groupTotal, currency)}
+          {people > 1 ? ` (${formatMoney(dayTotal, currency)} per person)` : ''}
         </p>
       </header>
 
@@ -27,7 +31,7 @@ export default function ItineraryCard({ day, currency }) {
               <p className="text-sm text-muted">{activity.location}</p>
             </div>
             <p className="col-start-2 mt-1 text-sm sm:col-start-3 sm:mt-0 sm:text-base">
-              {formatMoney(activity.estimated_cost, currency)}
+              {formatMoney(activity.estimated_cost * people, currency)}
             </p>
           </li>
         ))}

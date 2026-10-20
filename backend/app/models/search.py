@@ -39,6 +39,8 @@ class HotelSearchRequest(BaseModel):
     check_in: datetime.date
     check_out: datetime.date
     guests: int = Field(ge=1, le=20)
+    # Implied by the number of guests, but the contract asks for it.
+    rooms: int = Field(default=1, ge=1, le=10)
 
     @field_validator("check_in")
     @classmethod

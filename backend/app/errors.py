@@ -11,11 +11,12 @@ logger = logging.getLogger("triplan")
 class AppError(Exception):
     """Raise this anywhere in the backend to send the standard error format."""
 
-    def __init__(self, status_code: int, code: str, message: str):
+    def __init__(self, status_code: int, code: str, message: str, details=None):
         super().__init__(message)
         self.status_code = status_code
         self.code = code
         self.message = message
+        self.details = details
 
 
 def error_response(status_code: int, code: str, message: str, details=None) -> JSONResponse:
@@ -47,7 +48,7 @@ HTTP_CODES = {404: "not_found", 405: "method_not_allowed"}
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def handle_app_error(request: Request, exc: AppError):
-        return error_response(exc.status_code, exc.code, exc.message)
+        return error_response(exc.status_code, exc.code, exc.message, exc.details)
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(request: Request, exc: RequestValidationError):
