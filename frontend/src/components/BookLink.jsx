@@ -11,7 +11,7 @@ export default function BookLink({ url }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-block rounded bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark"
+      className="btn btn-primary btn-sm"
     >
       Book on the provider's site
       <span className="sr-only"> (opens in a new tab)</span>

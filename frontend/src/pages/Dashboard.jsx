@@ -56,14 +56,14 @@ function TripLoader({ tripId, initialTrip }) {
   if (state.status === 'error') {
     return (
       <section className="mx-auto max-w-5xl px-4 py-12">
-        <h1 className="text-3xl font-semibold">We could not load this trip</h1>
+        <h1 className="headline-md">We could not load this trip</h1>
         <p role="alert" className="mt-3 max-w-xl text-muted">
           {state.message}
         </p>
         <button
           type="button"
           onClick={handleRetry}
-          className="mt-6 rounded bg-brand px-5 py-3 font-medium text-white hover:bg-brand-dark"
+          className="btn btn-primary mt-6"
         >
           Try again
         </button>
@@ -76,22 +76,22 @@ function TripLoader({ tripId, initialTrip }) {
   return (
     <section className="mx-auto max-w-5xl px-4 py-12">
       {trip.is_mock && (
-        <p className="mb-6 max-w-xl border border-line bg-white px-4 py-3 text-sm">
+        <p className="mb-6 max-w-xl rounded-lg bg-card px-4 py-3 text-sm text-muted">
           Sample data for development. This is not a real plan.
         </p>
       )}
 
-      <h1 className="text-3xl font-semibold">{trip.destination}</h1>
+      <h1 className="headline-md">{trip.destination}</h1>
       <p className="mt-2 text-muted">
         {trip.days} {trip.days === 1 ? 'day' : 'days'}, {trip.people}{' '}
         {trip.people === 1 ? 'traveller' : 'travellers'}
       </p>
       <p className="mt-1 text-sm text-muted">Costs are estimates, not confirmed prices.</p>
       <p className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
-        <a href="#booking" className="text-brand underline">
+        <a href="#booking" className="btn-link text-accent">
           Book flights, buses, trains, and hotels
         </a>
-        <a href="#assistant" className="text-brand underline">
+        <a href="#assistant" className="btn-link text-accent">
           Ask the assistant to change this plan
         </a>
       </p>

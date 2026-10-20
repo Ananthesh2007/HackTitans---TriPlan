@@ -11,7 +11,7 @@ export default function Navbar() {
   return (
     <header className="border-b border-line">
       <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-        <Link to="/" className="font-serif text-xl font-semibold text-ink">
+        <Link to="/" className="font-display text-xl font-black tracking-wide text-ink">
           TriPlan
         </Link>
         <ul className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm sm:gap-x-6 sm:text-base">
@@ -20,7 +20,7 @@ export default function Navbar() {
               <NavLink
                 to={to}
                 className={({ isActive }) =>
-                  isActive ? 'font-semibold text-brand' : 'text-muted hover:text-ink'
+                  isActive ? 'font-semibold text-accent' : 'text-muted hover:text-ink'
                 }
               >
                 {label}

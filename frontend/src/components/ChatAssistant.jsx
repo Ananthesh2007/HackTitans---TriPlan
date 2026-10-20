@@ -9,8 +9,8 @@ function ChangeList({ diff, currency }) {
   const hasTotals = diff.totalBefore !== null && diff.totalAfter !== null
 
   return (
-    <div className="mt-3 border border-line bg-white p-4">
-      <h3 className="text-lg font-semibold">Proposed changes</h3>
+    <div className="panel mt-3">
+      <h3 className="text-lg font-black">Proposed changes</h3>
       <ul className="mt-3 space-y-2 text-sm">
         {diff.removed.map((item) => (
           <li key={`r-${item.day}-${item.name}`}>
@@ -96,7 +96,7 @@ export default function ChatAssistant({ trip, onApply }) {
 
   return (
     <section aria-labelledby="assistant-heading" className="max-w-xl">
-      <h2 id="assistant-heading" className="text-xl font-semibold">
+      <h2 id="assistant-heading" className="text-xl font-black">
         Change this plan
       </h2>
       <p className="mt-2 text-sm text-muted">
@@ -129,14 +129,14 @@ export default function ChatAssistant({ trip, onApply }) {
             <button
               type="button"
               onClick={handleApply}
-              className="rounded bg-brand px-5 py-3 font-medium text-white hover:bg-brand-dark"
+              className="btn btn-primary"
             >
               Apply changes
             </button>
             <button
               type="button"
               onClick={handleDiscard}
-              className="rounded border border-line bg-white px-5 py-3 font-medium hover:border-ink"
+              className="btn btn-secondary"
             >
               Keep current plan
             </button>
@@ -145,7 +145,7 @@ export default function ChatAssistant({ trip, onApply }) {
       )}
 
       {notice && (
-        <p role="status" className="mt-3 text-sm font-medium text-brand">
+        <p role="status" className="mt-3 text-sm font-medium text-accent">
           {notice}
         </p>
       )}
@@ -167,10 +167,10 @@ export default function ChatAssistant({ trip, onApply }) {
           placeholder="For example, make this trip cheaper"
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? 'chat-error' : undefined}
-          className="mt-2 w-full rounded border border-line bg-white px-3 py-2 text-ink placeholder:text-muted disabled:opacity-60"
+          className="input mt-2 disabled:opacity-60"
         />
         {error && (
-          <p id="chat-error" role="alert" className="mt-1 text-sm text-red-700">
+          <p id="chat-error" role="alert" className="mt-1 text-sm text-error">
             {error}
           </p>
         )}
@@ -182,7 +182,7 @@ export default function ChatAssistant({ trip, onApply }) {
         <button
           type="submit"
           disabled={isSending || Boolean(proposal)}
-          className="mt-3 rounded bg-brand px-5 py-3 font-medium text-white hover:bg-brand-dark disabled:opacity-60"
+          className="btn btn-primary mt-3"
         >
           {isSending ? 'Sending...' : 'Send'}
         </button>

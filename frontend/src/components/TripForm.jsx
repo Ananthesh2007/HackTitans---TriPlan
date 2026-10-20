@@ -77,7 +77,7 @@ function Field({ id, label, error, children }) {
       </label>
       <div className="mt-2">{children}</div>
       {error && (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-red-700">
+        <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-error">
           {error}
         </p>
       )}
@@ -86,8 +86,7 @@ function Field({ id, label, error, children }) {
 }
 
 function inputClass(error) {
-  const border = error ? 'border-red-700' : 'border-line'
-  return `w-full rounded border ${border} bg-white px-3 py-2 text-ink placeholder:text-muted`
+  return error ? 'input border-error' : 'input'
 }
 
 export default function TripForm({ onSubmit, isSubmitting = false }) {
@@ -223,7 +222,7 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
                 type="checkbox"
                 checked={values.interests.includes(value)}
                 onChange={() => toggleInterest(value)}
-                className="size-4 accent-brand"
+                className="size-4 accent-primary"
               />
               {label}
             </label>
@@ -244,7 +243,7 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded bg-brand px-5 py-3 font-medium text-white hover:bg-brand-dark disabled:opacity-60"
+        className="btn btn-primary"
       >
         {isSubmitting ? 'Generating itinerary...' : 'Generate itinerary'}
       </button>

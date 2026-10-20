@@ -18,8 +18,8 @@ export default function BudgetCard({ budget, costs, currency }) {
 
   if (!costs || (rows.length === 0 && !isAmount(costs.total))) {
     return (
-      <section aria-labelledby="budget-heading" className="max-w-xl border border-line bg-white p-5">
-        <h2 id="budget-heading" className="text-xl font-semibold">
+      <section aria-labelledby="budget-heading" className="panel max-w-xl">
+        <h2 id="budget-heading" className="text-xl font-black">
           Estimated budget
         </h2>
         <p className="mt-2 text-muted">A cost estimate is not available for this plan.</p>
@@ -49,8 +49,8 @@ export default function BudgetCard({ budget, costs, currency }) {
   }
 
   return (
-    <section aria-labelledby="budget-heading" className="max-w-xl border border-line bg-white p-5">
-      <h2 id="budget-heading" className="text-xl font-semibold">
+    <section aria-labelledby="budget-heading" className="panel max-w-xl">
+      <h2 id="budget-heading" className="text-xl font-black">
         Estimated budget
       </h2>
 
@@ -70,13 +70,13 @@ export default function BudgetCard({ budget, costs, currency }) {
       {hasBudget && (
         <div className="mt-4">
           <p className="text-sm text-muted">Your budget: {formatMoney(budget, currency)}</p>
-          <div className="mt-2 h-2 w-full bg-line" aria-hidden="true">
+          <div className="mt-2 h-2 w-full rounded-full bg-line" aria-hidden="true">
             <div
-              className={`h-2 ${isOver ? 'bg-red-700' : 'bg-brand'}`}
+              className={`h-2 rounded-full ${isOver ? 'bg-error' : 'bg-primary'}`}
               style={{ width: `${barShare}%` }}
             />
           </div>
-          <p role="status" className={`mt-3 font-medium ${isOver ? 'text-red-700' : 'text-brand'}`}>
+          <p role="status" className={`mt-3 font-medium ${isOver ? 'text-error' : 'text-accent'}`}>
             {statusText}
           </p>
           {isOver && (

@@ -25,7 +25,7 @@ export default function Plan() {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="text-3xl font-semibold">Plan a trip</h1>
+      <h1 className="headline-md">Plan a trip</h1>
       <p className="mt-2 max-w-xl text-muted">
         Enter the basics. You can change the plan afterwards by chatting with the assistant.
       </p>
@@ -40,8 +40,8 @@ export default function Plan() {
         )}
 
         {errorMessage && (
-          <div role="alert" className="mt-4 border border-red-700 bg-white px-4 py-3">
-            <p className="font-medium text-red-700">We could not create your trip.</p>
+          <div role="alert" className="panel mt-4 border border-error">
+            <p className="font-medium text-error">We could not create your trip.</p>
             <p className="mt-1 text-sm">{errorMessage}</p>
             <p className="mt-1 text-sm text-muted">
               Your details are still in the form. Check them and select Generate itinerary again.

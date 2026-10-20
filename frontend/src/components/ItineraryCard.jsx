@@ -10,7 +10,7 @@ export default function ItineraryCard({ day, currency, people = 1 }) {
   return (
     <article className="border-t border-line pt-4">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-xl font-black">
           Day {day.day}: {day.title}
         </h2>
         <p className="text-sm text-muted">

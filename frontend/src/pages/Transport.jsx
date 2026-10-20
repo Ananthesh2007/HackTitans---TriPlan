@@ -104,7 +104,7 @@ export default function Transport() {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="text-3xl font-semibold">Buses and trains</h1>
+      <h1 className="headline-md">Buses and trains</h1>
       <p className="mt-2 max-w-xl text-muted">
         TriPlan shows bus and train options from travel providers. You book on the provider's own
         website. TriPlan does not take payment.
@@ -122,7 +122,7 @@ export default function Transport() {
                   value={value}
                   checked={values.mode === value}
                   onChange={handleChange}
-                  className="size-4 accent-brand"
+                  className="size-4 accent-primary"
                 />
                 {label}
               </label>
@@ -175,7 +175,7 @@ export default function Transport() {
         <button
           type="submit"
           disabled={isSearching}
-          className="rounded bg-brand px-5 py-3 font-medium text-white hover:bg-brand-dark disabled:opacity-60"
+          className="btn btn-primary"
         >
           {isSearching ? 'Searching...' : `Search ${modeLabel}`}
         </button>

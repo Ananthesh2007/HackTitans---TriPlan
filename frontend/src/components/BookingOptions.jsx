@@ -72,7 +72,7 @@ export default function BookingOptions({ trip }) {
 
   return (
     <section aria-labelledby="booking-heading" className="max-w-3xl">
-      <h2 id="booking-heading" className="text-xl font-semibold">
+      <h2 id="booking-heading" className="text-xl font-black">
         Book your trip
       </h2>
       <p className="mt-2 text-sm text-muted">
@@ -92,7 +92,7 @@ export default function BookingOptions({ trip }) {
             </div>
             <Link
               to={option.to}
-              className="rounded border border-brand px-4 py-2 font-medium text-brand hover:bg-brand hover:text-white"
+              className="btn btn-secondary btn-sm"
             >
               {option.action}
               <span className="sr-only"> for this trip</span>

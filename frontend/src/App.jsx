@@ -12,7 +12,7 @@ import Transport from './pages/Transport.jsx'
 function UnderConstruction({ title }) {
   return (
     <section className="mx-auto max-w-5xl px-4 py-16">
-      <h1 className="text-3xl font-semibold">{title}</h1>
+      <h1 className="headline-md">{title}</h1>
       <p className="mt-3 text-muted">This page is not built yet.</p>
     </section>
   )

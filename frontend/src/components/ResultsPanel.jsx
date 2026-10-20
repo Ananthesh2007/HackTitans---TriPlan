@@ -15,13 +15,13 @@ export default function ResultsPanel({ state, onRetry, emptyText, children }) {
 
   if (state.status === 'error') {
     return (
-      <div role="alert" className="mt-8 max-w-xl border border-red-700 bg-white px-4 py-3">
-        <p className="font-medium text-red-700">The search did not work.</p>
+      <div role="alert" className="panel mt-8 max-w-xl border border-error">
+        <p className="font-medium text-error">The search did not work.</p>
         <p className="mt-1 text-sm">{state.message}</p>
         <button
           type="button"
           onClick={onRetry}
-          className="mt-3 rounded bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark"
+          className="btn btn-primary btn-sm mt-3"
         >
           Try again
         </button>

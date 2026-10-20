@@ -9,21 +9,18 @@ const steps = [
 export default function Home() {
   return (
     <section className="mx-auto max-w-5xl px-4 py-16">
-      <h1 className="max-w-2xl text-4xl font-semibold leading-tight">
+      <h1 className="headline-display max-w-3xl">
         Day-by-day trip plans with an estimated budget
       </h1>
-      <p className="mt-4 max-w-xl text-lg text-muted">
+      <p className="body-lg mt-4 max-w-xl text-muted">
         Tell TriPlan where you are going and what you can spend. It builds an itinerary you can
         change by chatting, and sends you to airline and hotel websites to book.
       </p>
-      <Link
-        to="/plan"
-        className="mt-8 inline-block rounded bg-brand px-5 py-3 font-medium text-white hover:bg-brand-dark"
-      >
+      <Link to="/plan" className="btn btn-primary mt-8">
         Plan a trip
       </Link>
 
-      <h2 className="mt-16 text-2xl font-semibold">How it works</h2>
+      <h2 className="headline-md mt-16">How it works</h2>
       <ol className="mt-4 max-w-xl list-decimal space-y-3 pl-6 marker:text-muted">
         {steps.map((step) => (
           <li key={step}>{step}</li>

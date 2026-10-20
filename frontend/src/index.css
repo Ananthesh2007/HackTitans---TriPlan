@@ -1,31 +1,281 @@
 @import "tailwindcss";
 
+/*
+  TriPlan design system — "TriPlan Dark".
+  A high-contrast, aviation-oriented dark system: bold Urbanist typography,
+  bright white text, and a restrained red accent.
+*/
+
 @theme {
-  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
-  --color-page: #f5f7f6;
-  --color-ink: #14232b;
-  --color-muted: #52636b;
-  --color-line: #d5dde0;
-  --color-brand: #0b5f7a;
-  --color-brand-dark: #084a5f;
+  /* Typeface: Urbanist is the core typeface across the whole experience. */
+  --font-sans: "Urbanist", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Urbanist", ui-sans-serif, system-ui, sans-serif;
+
+  /* Colors */
+  --color-canvas: #1a1a1a; /* neutral — the page backdrop */
+  --color-surface: #252831; /* overlays and utility containers */
+  --color-card: #1b1c1d; /* tertiary — cards and elevated panels */
+  --color-ink: #ffffff; /* on-surface — primary text */
+  --color-muted: #a3a8af; /* secondary text on dark */
+  --color-line: #33353a; /* hairline dividers and input borders */
+  --color-primary: #a01d26; /* brand red — fills, chips, accents */
+  --color-primary-hover: #8a1922;
+  --color-on-primary: #ffffff;
+  --color-accent: #e05a62; /* red used as text on dark, for legibility */
+  --color-error: #d13b45; /* destructive and validation states */
+
+  /* Shape: pills and large radii dominate; sharp corners are avoided. */
+  --radius: 4px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 30px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
 }
 
 @layer base {
+  html {
+    color-scheme: dark;
+  }
+
   body {
-    background-color: var(--color-page);
+    background-color: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
   }
 
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
+    font-family: var(--font-display);
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
+
+  ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-brand);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Typography scale */
+  .headline-display {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 8vw, 64px);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: 0.5px;
+  }
+
+  .headline-lg {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+  }
+
+  .headline-md {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+  }
+
+  .headline-sm {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+  }
+
+  .body-lg {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+  }
+
+  .body-md {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+  }
+
+  .body-sm {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+  }
+
+  .label-lg {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+  }
+
+  .label-md {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+  }
+
+  .label-sm {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+  }
+
+  /* Buttons: a white pill with red text is the primary action. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 49px;
+    padding: 15px 35px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-xl);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background-color: var(--color-ink);
+    color: var(--color-primary);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-ink);
+    color: var(--color-primary);
+  }
+
+  .btn-sm {
+    min-height: 0;
+    padding: 10px 22px;
+    font-size: 14px;
+  }
+
+  .btn-link {
+    background-color: transparent;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+    text-decoration: underline;
+  }
+
+  .btn-link:hover {
+    color: var(--color-accent);
+  }
+
+  /* Cards and panels sit on the flat dark backdrop, separated by tone only. */
+  .card {
+    background-color: var(--color-card);
+    color: var(--color-ink);
+    border-radius: var(--radius-lg);
+    padding: 60px;
+  }
+
+  .panel {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+  }
+
+  /* Inputs follow the dark surface language with clear white text. */
+  .input {
+    width: 100%;
+    background-color: var(--color-card);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+  }
+
+  .input::placeholder {
+    color: var(--color-muted);
+  }
+
+  .input:hover {
+    border-color: #4a4d53;
+  }
+
+  .input:focus,
+  .input:focus-visible {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+
+  .input[aria-invalid="true"] {
+    border-color: var(--color-error);
+  }
+
+  /* Chips: compact, unmistakably interactive, full rounding. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    border-radius: var(--radius-full);
+    padding: 8px 12px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
   }
 }
