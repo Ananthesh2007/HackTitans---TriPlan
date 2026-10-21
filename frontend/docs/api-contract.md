@@ -73,6 +73,8 @@ Success response (200):
 
 Request: `{ "origin": "Bengaluru", "destination": "Goa", "date": "2026-11-20", "passengers": 2 }`
 
+The search pages also send a `concession` and a `filters` object. See "Search filters" below.
+
 Response: `{ "results": [ ... ] }`. Each result:
 
 | Field | Type | Notes |
@@ -85,6 +87,7 @@ Response: `{ "results": [ ... ] }`. Each result:
 | price | number | Per person |
 | currency | string | For example "INR" |
 | booking_url | string or null | Must be an https URL. Anything else is ignored. |
+| concessions | array of string | The concessions the provider offers on this fare. May be empty. |
 
 An empty `results` array is a valid answer (the page shows "No flights found").
 
@@ -96,14 +99,39 @@ where `mode` is `bus` or `train`.
 
 Response: `{ "results": [ ... ] }`. Each result: `id`, `operator`, `vehicle_type` (optional, for
 example "AC sleeper"), `departure_time`, `arrival_time`, `duration`, `price` (per person),
-`currency`, `booking_url` (https URL or null).
+`currency`, `booking_url` (https URL or null), `tracking` (boolean), `is_new` (boolean),
+`concessions` (array of string).
 
 ## POST /api/hotels/search
 
 Request: `{ "destination": "Goa", "check_in": "2026-11-20", "check_out": "2026-11-23", "guests": 2 }`
 
 Response: `{ "results": [ ... ] }`. Each result: `id`, `name`, `area` (optional),
-`price_per_night` (number), `currency`, `booking_url` (https URL or null).
+`price_per_night` (number), `currency`, `booking_url` (https URL or null),
+`check_in_time` (optional "HH:MM"), `concessions` (array of string).
+
+## Search filters
+
+Every search page sends a `concession` and a `filters` object with the search.
+
+`concession` is one of `senior_citizen`, `army`, `student`, `doctor`, `nurse`, or null.
+
+`filters` is an object. Every field is optional, and a field left out never removes a result.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| ac | string | `any`, `ac`, `non_ac`. Buses and trains only. |
+| seat_class | string | `any`, `seater`, `sleeper`. Buses and trains only. |
+| tracking | boolean | Only services that can be tracked live. Buses and trains only. |
+| is_new | boolean | Only new vehicles. Buses and trains only. |
+| price_min, price_max | number | A price range. A result with no price is never removed by it. |
+| departure_window | string | `any`, `night`, `morning`, `afternoon`, `evening`. |
+| sort | string | `recommended`, `price_asc`, `price_desc`, `departure_asc`, `departure_desc`, `duration_asc`, `name_asc` |
+
+For hotels, the `departure_window` filter is applied to the check-in time.
+
+The frontend also applies these filters to the results it gets back, so a filter takes effect
+straight away and the page behaves the same on the built-in sample data.
 
 ## Notes for all endpoints
 

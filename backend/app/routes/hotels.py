@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
 from app.errors import AppError
-from app.models.search import HotelSearchRequest, HotelSearchResponse, HotelResult
+from app.models.search import HotelSearchRequest, HotelSearchResponse
+from app.services.hotels import search_hotels
 
 router = APIRouter(prefix="/api/hotels", tags=["hotels"])
 
@@ -27,36 +28,17 @@ def validate_booking_url(url: str) -> bool:
 
 
 @router.post("/search", response_model=HotelSearchResponse)
-def search_hotels(payload: HotelSearchRequest):
+def search_hotels_results(payload: HotelSearchRequest):
     """Search for hotels. Currently returns mock data."""
     try:
-        # Generate mock hotel results
-        results = [
-            HotelResult(
-                id="hotel-001",
-                name="Sample Hotel A",
-                area="City centre",
-                price_per_night=2200,
-                currency="INR",
-                booking_url=None,  # No verified provider integrated yet
-            ),
-            HotelResult(
-                id="hotel-002",
-                name="Sample Hotel B",
-                area="Near the station",
-                price_per_night=1500,
-                currency="INR",
-                booking_url=None,
-            ),
-            HotelResult(
-                id="hotel-003",
-                name="Sample Hotel C",
-                area="Quiet outskirts",
-                price_per_night=3400,
-                currency="INR",
-                booking_url=None,
-            ),
-        ]
+        results = search_hotels(
+            destination=payload.destination,
+            check_in=payload.check_in.isoformat(),
+            check_out=payload.check_out.isoformat(),
+            guests=payload.guests,
+            concession=payload.concession,
+            filters=payload.filters,
+        )
 
         return HotelSearchResponse(is_mock=True, results=results)
     except Exception as e:
@@ -77,5 +59,5 @@ def get_hotel_booking_link(data: dict):
     return {
         "hotel_id": hotel_id,
         "booking_url": booking_url,
-        "message": "Complete your booking on the external provider's website."
+        "message": "Complete your booking on the external provider's website.",
     }

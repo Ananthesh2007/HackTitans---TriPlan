@@ -6,6 +6,7 @@ import {
   mockTransportResults,
   mockTripMap,
 } from './mockActions.js'
+import { filterResults, sortResults } from '../utils/resultFilters.js'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -132,11 +133,31 @@ function assertResults(data) {
   }
 }
 
+// Applies the filters to the sample data, so the sample mode behaves the
+// same way the real backend does. The backend applies the same rules
+// (see `backend/app/services/filters.py`).
+function mockResults(data, params) {
+  const filters = params?.filters || {}
+  const concession = params?.concession || null
+
+  const results = filterResults(data.results, {
+    ac: filters.ac || 'any',
+    seatClass: filters.seat_class || 'any',
+    tracking: Boolean(filters.tracking),
+    isNew: Boolean(filters.is_new),
+    priceMin: filters.price_min ?? '',
+    priceMax: filters.price_max ?? '',
+    departureWindow: filters.departure_window || 'any',
+  }, concession)
+
+  return { ...data, results: sortResults(results, filters.sort || 'recommended') }
+}
+
 // POST /api/flights/search
 export async function searchFlights(params) {
   if (isMockMode) {
     await wait(700)
-    return mockFlightResults()
+    return mockResults(mockFlightResults(), params)
   }
   return assertResults(
     await request('/api/flights/search', { method: 'POST', body: JSON.stringify(params) }),
@@ -147,7 +168,7 @@ export async function searchFlights(params) {
 export async function searchHotels(params) {
   if (isMockMode) {
     await wait(700)
-    return mockHotelResults()
+    return mockResults(mockHotelResults(), params)
   }
   return assertResults(
     await request('/api/hotels/search', { method: 'POST', body: JSON.stringify(params) }),
@@ -159,7 +180,7 @@ export async function searchHotels(params) {
 export async function searchTransport(params) {
   if (isMockMode) {
     await wait(700)
-    return mockTransportResults(params.mode)
+    return mockResults(mockTransportResults(params.mode), params)
   }
   return assertResults(
     await request('/api/transport/search', { method: 'POST', body: JSON.stringify(params) }),

@@ -16,3 +16,9 @@ export function cleanCount(value, min, max, fallback) {
   const number = Number(value)
   return Number.isInteger(number) && number >= min && number <= max ? number : fallback
 }
+
+// A known concession category, otherwise an empty string.
+export function cleanConcession(value) {
+  const known = ['senior_citizen', 'army', 'student', 'doctor', 'nurse']
+  return typeof value === 'string' && known.includes(value) ? value : ''
+}

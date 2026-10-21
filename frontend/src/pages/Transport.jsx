@@ -1,13 +1,26 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Field, { inputClass } from '../components/Field.jsx'
 import ResultsPanel from '../components/ResultsPanel.jsx'
 import BookLink from '../components/BookLink.jsx'
+import PlaceInput from '../components/PlaceInput.jsx'
+import ConcessionSelect from '../components/ConcessionSelect.jsx'
+import FilterPanel from '../components/FilterPanel.jsx'
+import SortSelect from '../components/SortSelect.jsx'
 import { useSearch } from '../hooks/useSearch.js'
+import { useFilterRefresh } from '../hooks/useFilterRefresh.js'
 import { searchTransport } from '../services/api.js'
 import { todayString } from '../utils/dates.js'
-import { cleanCount, cleanDate, cleanText } from '../utils/queryPrefill.js'
+import { cleanCount, cleanDate, cleanText, cleanConcession } from '../utils/queryPrefill.js'
 import { formatMoney } from '../utils/format.js'
+import {
+  DEFAULT_FILTERS,
+  SORT_OPTIONS,
+  concessionLabels,
+  filtersFromParams,
+  toApiFilters,
+} from '../utils/filters.js'
+import { applyFiltersAndSort } from '../utils/resultFilters.js'
 
 const FIELD_ORDER = ['origin', 'destination', 'date', 'passengers']
 
@@ -24,6 +37,7 @@ function initialValues(search) {
     destination: cleanText(params.get('to')),
     date: cleanDate(params.get('date')),
     passengers: String(cleanCount(params.get('passengers'), 1, 9, 1)),
+    concession: cleanConcession(params.get('concession')),
   }
 }
 
@@ -58,13 +72,29 @@ export default function Transport() {
   const { search: queryString } = useLocation()
   const [values, setValues] = useState(() => initialValues(queryString))
   const [errors, setErrors] = useState({})
+  const [filters, setFilters] = useState(() => filtersFromParams(new URLSearchParams(queryString)))
   const [searchedMode, setSearchedMode] = useState(null)
   const [search, runSearch, retrySearch] = useSearch(searchTransport)
   const isSearching = search.status === 'loading'
   const modeLabel = values.mode === 'train' ? 'trains' : 'buses'
 
+  // The results as they came back, before the filters are applied.
+  const rawResults = useMemo(() => search.data?.results || [], [search.data])
+
+  // The results the user sees: filtered and sorted on this page, so a
+  // filter takes effect straight away.
+  const visibleResults = useMemo(
+    () => applyFiltersAndSort(rawResults, filters, values.concession),
+    [rawResults, filters, values.concession],
+  )
+
   function handleChange(event) {
     const { name, value } = event.target
+    setValues((current) => ({ ...current, [name]: value }))
+    if (errors[name]) setErrors((current) => ({ ...current, [name]: undefined }))
+  }
+
+  function handlePlaceChange(name, value) {
     setValues((current) => ({ ...current, [name]: value }))
     if (errors[name]) setErrors((current) => ({ ...current, [name]: undefined }))
   }
@@ -80,6 +110,18 @@ export default function Transport() {
     }
   }
 
+  function handleFilterChange(name, value) {
+    setFilters((current) => ({ ...current, [name]: value }))
+  }
+
+  function handleFilterToggle(name) {
+    setFilters((current) => ({ ...current, [name]: !current[name] }))
+  }
+
+  function resetFilters() {
+    setFilters({ ...DEFAULT_FILTERS })
+  }
+
   function handleSubmit(event) {
     event.preventDefault()
     if (isSearching) return
@@ -93,14 +135,30 @@ export default function Transport() {
     }
 
     setSearchedMode(values.mode)
-    runSearch({
+    runSearch(buildParams())
+  }
+
+  // The request the search sends.
+  function buildParams() {
+    return {
       mode: values.mode,
       origin: values.origin.trim(),
       destination: values.destination.trim(),
       date: values.date,
       passengers: Number(values.passengers),
-    })
+      concession: values.concession || null,
+      filters: toApiFilters(filters),
+    }
   }
+
+  // A filter that widens the search needs fresh results from the server.
+  useFilterRefresh(
+    filters,
+    values.concession,
+    searchedMode === values.mode,
+    runSearch,
+    buildParams,
+  )
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-12">
@@ -132,21 +190,25 @@ export default function Transport() {
 
         <div className="grid gap-6 sm:grid-cols-2">
           <Field id="origin" label="From" error={errors.origin}>
-            <input
-              type="text"
-              autoComplete="off"
+            <PlaceInput
+              id="origin"
+              label="From"
+              value={values.origin}
+              onChange={(value) => handlePlaceChange('origin', value)}
+              error={errors.origin}
+              describedBy={errors.origin ? 'origin-error' : undefined}
               placeholder="City or town"
-              className={inputClass(errors.origin)}
-              {...fieldProps('origin')}
             />
           </Field>
           <Field id="destination" label="To" error={errors.destination}>
-            <input
-              type="text"
-              autoComplete="off"
+            <PlaceInput
+              id="destination"
+              label="To"
+              value={values.destination}
+              onChange={(value) => handlePlaceChange('destination', value)}
+              error={errors.destination}
+              describedBy={errors.destination ? 'destination-error' : undefined}
               placeholder="City or town"
-              className={inputClass(errors.destination)}
-              {...fieldProps('destination')}
             />
           </Field>
         </div>
@@ -172,6 +234,11 @@ export default function Transport() {
           </Field>
         </div>
 
+        <ConcessionSelect
+          value={values.concession}
+          onChange={(value) => setValues((current) => ({ ...current, concession: value }))}
+        />
+
         <button
           type="submit"
           disabled={isSearching}
@@ -181,41 +248,75 @@ export default function Transport() {
         </button>
       </form>
 
+      <FilterPanel
+        filters={filters}
+        onChange={handleFilterChange}
+        onToggle={handleFilterToggle}
+        onReset={resetFilters}
+        showVehicle
+        showTracking
+        showNew
+        timeLegend="Departure time"
+      />
+
       {searchedMode === values.mode && (
         <ResultsPanel
           state={search}
           onRetry={retrySearch}
-          emptyText={`No ${modeLabel} found. Try a different date or place.`}
+          emptyText={`No ${modeLabel} match these filters. Try a different date or place, or change a filter.`}
+          results={visibleResults}
         >
-          {(results) => (
-            <ul className="max-w-3xl divide-y divide-line border-y border-line">
-              {results.map((option, index) => (
-                <li key={option.id ?? index} className="py-4">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="font-medium">{option.operator || 'Operator not listed'}</p>
-                    <p>
-                      {typeof option.price === 'number'
-                        ? `${formatMoney(option.price, option.currency)} per person`
-                        : 'Price not available'}
+          {() => (
+            <>
+              <SortSelect
+                value={filters.sort}
+                options={SORT_OPTIONS}
+                onChange={(value) => handleFilterChange('sort', value)}
+                resultCount={visibleResults.length}
+              />
+
+              <ul className="max-w-3xl divide-y divide-line border-y border-line">
+                {visibleResults.map((option, index) => (
+                  <li key={option.id ?? index} className="py-4">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="font-medium">{option.operator || 'Operator not listed'}</p>
+                      <p>
+                        {typeof option.price === 'number'
+                          ? `${formatMoney(option.price, option.currency)} per person`
+                          : 'Price not available'}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-sm text-muted">
+                      {[
+                        typeof option.vehicle_type === 'string' ? option.vehicle_type : '',
+                        option.departure_time && option.arrival_time
+                          ? `${option.departure_time} to ${option.arrival_time}`
+                          : '',
+                        typeof option.duration === 'string' ? option.duration : '',
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
                     </p>
-                  </div>
-                  <p className="mt-1 text-sm text-muted">
-                    {[
-                      typeof option.vehicle_type === 'string' ? option.vehicle_type : '',
-                      option.departure_time && option.arrival_time
-                        ? `${option.departure_time} to ${option.arrival_time}`
-                        : '',
-                      typeof option.duration === 'string' ? option.duration : '',
-                    ]
-                      .filter(Boolean)
-                      .join(', ')}
-                  </p>
-                  <div className="mt-3">
-                    <BookLink url={option.booking_url} />
-                  </div>
-                </li>
-              ))}
-            </ul>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {option.tracking && (
+                        <span className="chip">Live tracking</span>
+                      )}
+                      {option.is_new && (
+                        <span className="chip">New vehicle</span>
+                      )}
+                      {Array.isArray(option.concessions) && option.concessions.length > 0 && (
+                        <span className="chip">
+                          Concession: {concessionLabels(option.concessions)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-3">
+                      <BookLink url={option.booking_url} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </ResultsPanel>
       )}

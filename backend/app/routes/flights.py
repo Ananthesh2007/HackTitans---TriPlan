@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
 from app.errors import AppError
-from app.models.search import FlightSearchRequest, FlightSearchResponse, FlightResult
+from app.models.search import FlightSearchRequest, FlightSearchResponse
+from app.services.flights import search_flights
 
 router = APIRouter(prefix="/api/flights", tags=["flights"])
 
@@ -27,45 +28,17 @@ def validate_booking_url(url: str) -> bool:
 
 
 @router.post("/search", response_model=FlightSearchResponse)
-def search_flights(payload: FlightSearchRequest):
+def search_flights_results(payload: FlightSearchRequest):
     """Search for flights. Currently returns mock data."""
     try:
-        # Generate mock flight results
-        results = [
-            FlightResult(
-                id="flight-001",
-                airline="Sample Airline A",
-                departure_time="06:30",
-                arrival_time="08:45",
-                duration="2h 15m",
-                stops=0,
-                price=4800,
-                currency="INR",
-                booking_url=None,  # No verified provider integrated yet
-            ),
-            FlightResult(
-                id="flight-002",
-                airline="Sample Airline B",
-                departure_time="11:10",
-                arrival_time="14:50",
-                duration="3h 40m",
-                stops=1,
-                price=3900,
-                currency="INR",
-                booking_url=None,
-            ),
-            FlightResult(
-                id="flight-003",
-                airline="Sample Airline C",
-                departure_time="18:20",
-                arrival_time="20:35",
-                duration="2h 15m",
-                stops=0,
-                price=5600,
-                currency="INR",
-                booking_url=None,
-            ),
-        ]
+        results = search_flights(
+            origin=payload.origin,
+            destination=payload.destination,
+            date=payload.date.isoformat(),
+            passengers=payload.passengers,
+            concession=payload.concession,
+            filters=payload.filters,
+        )
 
         return FlightSearchResponse(is_mock=True, results=results)
     except Exception as e:
@@ -86,5 +59,5 @@ def get_flight_booking_link(data: dict):
     return {
         "flight_id": flight_id,
         "booking_url": booking_url,
-        "message": "Complete your booking on the external provider's website."
+        "message": "Complete your booking on the external provider's website.",
     }# 19-10-2026 — URL validation: verified allowlists in flights.py/hotels.py

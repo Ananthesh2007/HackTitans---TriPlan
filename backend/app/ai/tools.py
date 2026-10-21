@@ -7,9 +7,7 @@ the model can look up real prices and real places instead of guessing.
 The tools are thin wrappers around the service layer:
 
 - `search_flights`, `search_hotels` -> `app/services/flights.py`, `hotels.py`
-- `search_transport` -> `app/routes/transport.py` (the transport mock data
-  still lives in the route layer; it is called here so the data is not
-  duplicated)
+- `search_transport` -> `app/services/transport.py`
 - `geocode_place`, `suggest_stop_order` -> `app/services/maps.py`
 - `estimate_trip_cost` -> `app/services/budget.py`
 
@@ -44,6 +42,7 @@ from app.services.budget import estimate_budget
 from app.services.flights import search_flights
 from app.services.hotels import search_hotels
 from app.services.maps import geocode_place, suggest_visit_order
+from app.services.transport import search_transport
 
 logger = logging.getLogger("triplan.tools")
 
@@ -92,6 +91,14 @@ TOOL_DEFINITIONS: list[dict] = [
                 "minimum": 1,
                 "maximum": 9,
             },
+            "concession": {
+                "type": "string",
+                "description": (
+                    "The concession category of the traveller, if any. "
+                    "Leave it out when nobody is travelling with a concession."
+                ),
+                "enum": list(CONCESSIONS),
+            },
         },
         ["origin", "destination", "date", "passengers"],
     ),
@@ -113,6 +120,14 @@ TOOL_DEFINITIONS: list[dict] = [
                 "description": "Number of guests, 1 to 20.",
                 "minimum": 1,
                 "maximum": 20,
+            },
+            "concession": {
+                "type": "string",
+                "description": (
+                    "The concession category of the traveller, if any. "
+                    "Leave it out when nobody is travelling with a concession."
+                ),
+                "enum": list(CONCESSIONS),
             },
         },
         ["destination", "check_in", "check_out", "guests"],
@@ -137,6 +152,14 @@ TOOL_DEFINITIONS: list[dict] = [
                 "type": "string",
                 "description": "The kind of transport to look for.",
                 "enum": ["bus", "train"],
+            },
+            "concession": {
+                "type": "string",
+                "description": (
+                    "The concession category of the traveller, if any. "
+                    "Leave it out when nobody is travelling with a concession."
+                ),
+                "enum": list(CONCESSIONS),
             },
         },
         ["origin", "destination", "date", "passengers", "mode"],
@@ -239,6 +262,19 @@ def _require_list(arguments: dict, key: str) -> list:
     return value
 
 
+# The concession categories the model may ask for.
+CONCESSIONS = ("senior_citizen", "army", "student", "doctor", "nurse")
+
+
+def _optional_concession(arguments: dict) -> str | None:
+    """Read the concession category, when the model names a known one."""
+    value = arguments.get("concession")
+    if not isinstance(value, str):
+        return None
+    value = value.strip().lower()
+    return value if value in CONCESSIONS else None
+
+
 def _build_request(model, arguments: dict):
     """Build a request model, turning a validation error into a plain message.
 
@@ -264,14 +300,16 @@ def _handle_search_flights(arguments: dict) -> dict:
             "destination": _require_str(arguments, "destination"),
             "date": _require_date(arguments, "date"),
             "passengers": _require_int(arguments, "passengers", 1, 9),
+            "concession": _optional_concession(arguments),
         },
     )
 
     results = search_flights(
-        request.origin,
-        request.destination,
-        request.date.isoformat(),
-        request.passengers,
+        origin=request.origin,
+        destination=request.destination,
+        date=request.date.isoformat(),
+        passengers=request.passengers,
+        concession=request.concession,
     )
 
     return {
@@ -292,14 +330,16 @@ def _handle_search_hotels(arguments: dict) -> dict:
             "check_in": _require_date(arguments, "check_in"),
             "check_out": _require_date(arguments, "check_out"),
             "guests": _require_int(arguments, "guests", 1, 20),
+            "concession": _optional_concession(arguments),
         },
     )
 
     results = search_hotels(
-        request.destination,
-        request.check_in.isoformat(),
-        request.check_out.isoformat(),
-        request.guests,
+        destination=request.destination,
+        check_in=request.check_in.isoformat(),
+        check_out=request.check_out.isoformat(),
+        guests=request.guests,
+        concession=request.concession,
     )
 
     return {
@@ -312,14 +352,7 @@ def _handle_search_hotels(arguments: dict) -> dict:
 
 
 def _handle_search_transport(arguments: dict) -> dict:
-    """Look up buses or trains.
-
-    The transport mock data still lives in the route layer, so the route
-    function is called here. It is imported inside the function to keep the
-    import order simple (the routes import the models, not this module).
-    """
-    from app.routes.transport import search_transport
-
+    """Look up buses or trains."""
     request = _build_request(
         TransportSearchRequest,
         {
@@ -328,18 +361,26 @@ def _handle_search_transport(arguments: dict) -> dict:
             "date": _require_date(arguments, "date"),
             "passengers": _require_int(arguments, "passengers", 1, 9),
             "mode": _require_str(arguments, "mode").lower(),
+            "concession": _optional_concession(arguments),
         },
     )
 
-    response = search_transport(request)
+    results = search_transport(
+        mode=request.mode,
+        origin=request.origin,
+        destination=request.destination,
+        date=request.date.isoformat(),
+        passengers=request.passengers,
+        concession=request.concession,
+    )
 
     return {
         "origin": request.origin,
         "destination": request.destination,
         "date": request.date.isoformat(),
         "mode": request.mode,
-        "is_mock": response.is_mock,
-        "results": [result.model_dump() for result in response.results],
+        "is_mock": True,
+        "results": [result.model_dump() for result in results],
     }
 
 

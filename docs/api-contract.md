@@ -9,6 +9,43 @@ All timestamps are in ISO 8601 UTC. All money amounts are in INR (Indian Rupees)
 - **Place**: A non-empty string (2-80 chars) after trimming whitespace.
 - **Interest**: One of `"nature" | "food" | "adventure" | "culture" | "history" | "beaches" | "relaxation" | "shopping"`.
 - **Diet**: One of `"none" | "vegetarian" | "vegan" | "non-vegetarian"`.
+- **Concession**: One of `"senior_citizen" | "army" | "student" | "doctor" | "nurse"`. The category the
+  traveller books under. A traveller picks at most one.
+- **Filters**: The filters a search page sends with the search. Every field is optional, and a
+  field left out never removes a result.
+
+### Filters object
+
+```json
+{
+  "ac": "any",
+  "seat_class": "any",
+  "tracking": false,
+  "is_new": false,
+  "price_min": null,
+  "price_max": null,
+  "departure_window": "any",
+  "sort": "recommended"
+}
+```
+- `ac`: `"any" | "ac" | "non_ac"` (buses and trains)
+- `seat_class`: `"any" | "seater" | "sleeper"` (buses and trains)
+- `tracking`: boolean – only services that can be tracked live
+- `is_new`: boolean – only new vehicles
+- `price_min`, `price_max`: number ≥ 0 or null
+- `departure_window`: `"any" | "night" | "morning" | "afternoon" | "evening"`
+  (night 00:00-06:00, morning 06:00-12:00, afternoon 12:00-18:00, evening 18:00-24:00)
+- `sort`: `"recommended" | "price_asc" | "price_desc" | "departure_asc" | "departure_desc" | "duration_asc" | "name_asc"`
+
+### How the filters are applied
+
+- A filter left at its default never removes a result.
+- A result that does not list its concessions is kept for every concession, because the provider
+  did not say it was excluded. A result that does list them is kept only for the concessions it
+  lists.
+- A result with no price is never removed by the price range.
+- A result with no time is never removed by the departure window.
+- Sorting changes the order of the results, never which results are returned.
 
 ## POST /api/trips
 Create a trip and generate an itinerary.
@@ -241,13 +278,17 @@ Search for flights.
   "origin": "Mangalore",
   "destination": "New York",
   "date": "2026-11-20",
-  "passengers": 1
+  "passengers": 1,
+  "concession": "senior_citizen",
+  "filters": { "price_max": 6000, "sort": "price_asc" }
 }
 ```
 - `origin`: Place (required)
 - `destination`: Place (required, must differ from origin)
 - `date`: ISO 8601 date (required, must be today or later)
 - `passengers`: integer, 1-9 (required)
+- `concession`: Concession or null (optional, default null)
+- `filters`: Filters object (optional, default null)
 
 ### Response (200)
 ```json
@@ -263,7 +304,8 @@ Search for flights.
       "stops": 0,
       "price": 4800,
       "currency": "INR",
-      "booking_url": null
+      "booking_url": null,
+      "concessions": ["senior_citizen", "student", "army"]
     }
   ]
 }
@@ -279,6 +321,7 @@ Search for flights.
   - `price`: number ≥ 0 or null (per person)
   - `currency`: `"INR"` (fixed)
   - `booking_url`: string or null – when present, must start with `https://` and be from a verified provider
+  - `concessions`: array of Concession the provider offers on this fare (may be empty)
 
 ## POST /api/flights/booking-link
 Get a verified booking URL for a flight.
@@ -313,7 +356,9 @@ Search for hotels.
   "check_in": "2026-11-20",
   "check_out": "2026-11-23",
   "guests": 2,
-  "rooms": 1
+  "rooms": 1,
+  "concession": "senior_citizen",
+  "filters": { "price_max": 3000 }
 }
 ```
 - `destination`: Place (required)
@@ -321,6 +366,8 @@ Search for hotels.
 - `check_out`: ISO 8601 date (required, must be after check_in)
 - `guests`: integer, 1-20 (required)
 - `rooms`: integer, 1-10 (optional, defaults to 1; implied by guests)
+- `concession`: Concession or null (optional, default null)
+- `filters`: Filters object (optional, default null)
 
 ### Response (200)
 ```json
@@ -333,7 +380,9 @@ Search for hotels.
       "area": "City centre",
       "price_per_night": 2200,
       "currency": "INR",
-      "booking_url": null
+      "booking_url": null,
+      "check_in_time": "14:00",
+      "concessions": ["senior_citizen", "army", "student"]
     }
   ]
 }
@@ -346,6 +395,8 @@ Search for hotels.
   - `price_per_night`: number ≥ 0 or null
   - `currency`: `"INR"` (fixed)
   - `booking_url`: string or null – when present, must start with `https://` and be from a verified provider
+  - `check_in_time`: HH:MM string or null – the time the room can be checked into
+  - `concessions`: array of Concession the provider offers on this rate (may be empty)
 
 ## POST /api/hotels/booking-link
 Get a verified booking URL for a hotel.
@@ -380,7 +431,9 @@ Search for buses or trains.
   "destination": "Bangalore",
   "date": "2026-11-20",
   "passengers": 2,
-  "mode": "train"
+  "mode": "train",
+  "concession": "senior_citizen",
+  "filters": { "ac": "ac", "seat_class": "sleeper", "tracking": true }
 }
 ```
 - `origin`: Place (required)
@@ -388,6 +441,9 @@ Search for buses or trains.
 - `date`: ISO 8601 date (required, must be today or later)
 - `passengers`: integer, 1-9 (required)
 - `mode`: `"bus"` or `"train"` (required)
+- `concession`: Concession or null (optional, default null)
+- `filters`: Filters object (optional, default null). The `ac`, `seat_class`, `tracking` and
+  `is_new` filters apply to buses and trains.
 
 ### Response (200)
 ```json
@@ -403,7 +459,10 @@ Search for buses or trains.
       "duration": "9h 50m",
       "price": 480,
       "currency": "INR",
-      "booking_url": null
+      "booking_url": null,
+      "tracking": true,
+      "is_new": false,
+      "concessions": ["senior_citizen", "student", "army"]
     }
   ]
 }
@@ -419,6 +478,9 @@ Search for buses or trains.
   - `price`: number ≥ 0 or null (per person)
   - `currency`: `"INR"` (fixed)
   - `booking_url`: string or null – when present, must start with `https://` and be from a verified provider
+  - `tracking`: boolean – true when the service can be tracked live
+  - `is_new`: boolean – true when the vehicle is a new one
+  - `concessions`: array of Concession the provider offers on this fare (may be empty)
 
 ## GET /api/weather
 Get weather information for a place and date.
