@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import config
 from app.errors import register_error_handlers
-from app.routes import flights, hotels, transport, trips, weather
+from app.routes import flights, hotels, maps, transport, trips, weather
 
 app = FastAPI(title="TriPlan API", version="0.2.0")
 
@@ -24,6 +24,8 @@ app.include_router(hotels.router)
 app.include_router(transport.router)
 # Date: 21-10-2026 — Added weather endpoint (optional feature)
 app.include_router(weather.router)
+# Date: 21-10-2026 — Added map and route endpoints
+app.include_router(maps.router)
 
 
 @app.get("/health")

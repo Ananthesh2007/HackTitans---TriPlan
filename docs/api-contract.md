@@ -462,6 +462,108 @@ Get weather information for a place and date.
 - `date`: echoed
 - `error`: explanation – never invents weather data
 
+## GET /api/maps/geocode
+Look up a place name and return where it is on the map.
+
+### Request (query parameters)
+```
+/api/maps/geocode?place=Cubbon Park, Bengaluru
+```
+- `place`: Place (required)
+
+### Response (200) – when the place is found
+```json
+{
+  "place": "Cubbon Park, Bengaluru",
+  "name": "Cubbon Park",
+  "display_name": "Cubbon Park, Sampangirama Nagar, Bengaluru, Karnataka, India",
+  "coordinates": { "lat": 12.9742535, "lng": 77.5921906 },
+  "provider": "osm",
+  "map_url": "https://www.openstreetmap.org/?q=12.9742535,77.5921906"
+}
+```
+- `place`: echoed
+- `coordinates`: latitude and longitude
+- `provider`: `"osm"` or `"google"`
+- `map_url`: a link that opens the point in a map
+
+### Response (200) – when the place is not found
+```json
+{
+  "place": "Cubbon Park, Bengaluru",
+  "error": "This place could not be found on the map."
+}
+```
+- Never returns invented coordinates.
+
+### Response (200) – when no map provider is configured
+```json
+{
+  "place": "Cubbon Park, Bengaluru",
+  "error": "Map service not configured."
+}
+```
+
+## GET /api/trips/{trip_id}/map
+The map of every day of a trip.
+
+### Response (200)
+```json
+{
+  "trip_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "destination": "Coorg",
+  "provider": "osm",
+  "is_mock": false,
+  "warning": null,
+  "days": [
+    {
+      "day": 1,
+      "title": "Day 1 in Coorg",
+      "stops": [
+        {
+          "order": 1,
+          "name": "Local sightseeing tour",
+          "location": "City centre, Coorg",
+          "coordinates": { "lat": 12.4244, "lng": 75.7382 },
+          "map_url": "https://www.openstreetmap.org/?q=12.4244,75.7382(Local sightseeing tour)"
+        }
+      ],
+      "route": {
+        "provider": "osm",
+        "mode": "driving",
+        "distance_km": 7.94,
+        "duration_minutes": 11.9,
+        "points": [{ "lat": 12.9742, "lng": 77.5921 }],
+        "legs": [
+          {
+            "from_stop": "Cubbon Park",
+            "to_stop": "Palace",
+            "distance_km": 2.81,
+            "duration_minutes": 4.1
+          }
+        ],
+        "is_estimate": false,
+        "warning": null
+      },
+      "warning": null
+    }
+  ]
+}
+```
+- `provider`: the maps provider that answered, or `null` when none is configured
+- `is_mock`: true when no provider answered, so the map is empty
+- `days[].stops[].coordinates`: `null` when the place could not be located
+- `days[].route.points`: the line to draw on the map. Empty when the provider gave no geometry. The line is thinned to at most 120 points.
+- `days[].route.is_estimate`: true when the distance is a straight-line calculation, not route data
+- `days[].warning`: says how many places could not be located
+
+### Error Responses
+- **404 Not Found**: no trip with that ID
+
+### Notes
+- The provider is asked at most once a second, as the OpenStreetMap usage policy asks. Answers are cached for 24 hours, so opening the same trip again is instant.
+- The first request for a trip can take a few seconds, because every place in the plan has to be looked up.
+
 ## Error Format
 Every error response (4xx or 5xx) returns:
 ```json

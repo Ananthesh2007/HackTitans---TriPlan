@@ -4,6 +4,7 @@ import {
   mockHotelResults,
   mockModifyTrip,
   mockTransportResults,
+  mockTripMap,
 } from './mockActions.js'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -163,4 +164,28 @@ export async function searchTransport(params) {
   return assertResults(
     await request('/api/transport/search', { method: 'POST', body: JSON.stringify(params) }),
   )
+}
+
+// GET /api/trips/{trip_id}/map
+// Returns the stops and the route of every day of the trip.
+export async function getTripMap(tripId) {
+  if (isMockMode) {
+    await wait(600)
+    return mockTripMap()
+  }
+  const data = await request(`/api/trips/${encodeURIComponent(tripId)}/map`)
+  if (!data || !Array.isArray(data.days)) {
+    throw new Error('The server sent a map we could not read. Try again.')
+  }
+  return data
+}
+
+// GET /api/maps/geocode
+// Looks up one place name. Returns { place, error } when it cannot be found.
+export async function geocodePlace(place) {
+  if (isMockMode) {
+    await wait(300)
+    return { place, error: 'The map service is not available in sample mode.' }
+  }
+  return request(`/api/maps/geocode?place=${encodeURIComponent(place)}`)
 }

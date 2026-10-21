@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "graphify-local": {
+      "command": "C:\\Users\\ANANTHESH SHENOY\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "args": [
+        "-m",
+        "graphify.serve",
+        "C:\\HACKTITANS\\HackTitans---TriPlan\\graphify-out\\graph.json"
+      ]
+    }
+  }
+}

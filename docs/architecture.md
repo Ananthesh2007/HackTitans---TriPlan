@@ -106,17 +106,21 @@ backend/
 │   ├── services/            # Business logic layer
 │   │   ├── budget.py        # Deterministic cost calculations
 │   │   ├── flights.py       # Mock/live flight search wrappers
-│   │   └── hotels.py        # Mock/live hotel search wrappers
+│   │   ├── hotels.py        # Mock/live hotel search wrappers
+│   │   └── maps.py          # Geocoding + route planning
 │   │
 │   ├── models/              # Pydantic models (DTOs)
 │   │   ├── trip.py          # Trip, DayPlan, Activity, etc.
-│   │   └── search.py        # Flight/Hotel/Transport search shapes
+│   │   ├── search.py        # Flight/Hotel/Transport search shapes
+│   │   └── maps.py          # Coordinates, stops, route shapes
 │   │
 │   ├── routes/              # FastAPI routers (HTTP endpoints)
 │   │   ├── trips.py         # POST/GET /api/trips*
 │   │   ├── flights.py       # POST /api/flights/*
 │   │   ├── hotels.py        # POST /api/hotels/*
-│   │   └── transport.py     # POST /api/transport/*
+│   │   ├── transport.py     # POST /api/transport/*
+│   │   ├── weather.py       # GET /api/weather
+│   │   └── maps.py          # GET /api/maps/*, GET /api/trips/{id}/map
 │   │
 │   └── store.py             # In-memory trip storage (dict)
 │

@@ -55,6 +55,42 @@ LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))
 FORCE_MOCK_AI = os.getenv("FORCE_MOCK_AI", "false").strip().lower() in ("1", "true", "yes")
 
 
+# ------------------------------------------------------------------
+# Maps provider settings.
+#
+# "osm" uses OpenStreetMap Nominatim (geocoding) and OSRM (routing).
+# Both work without an API key. "none" disables the map service.
+# ------------------------------------------------------------------
+
+# "osm", "google" or "none"
+MAPS_PROVIDER = os.getenv("MAPS_PROVIDER", "osm").strip().lower()
+
+# Optional Google Maps key. Only used when MAPS_PROVIDER is "google".
+MAPS_API_KEY = os.getenv("MAPS_API_KEY", "").strip()
+
+# How long to wait for a maps provider (seconds).
+MAPS_TIMEOUT_SECONDS = float(os.getenv("MAPS_TIMEOUT_SECONDS", "10"))
+
+# The app identifies itself to Nominatim, as its usage policy requires.
+MAPS_USER_AGENT = os.getenv(
+    "MAPS_USER_AGENT",
+    "TriPlan/0.2 (https://github.com/hacktitans/triplan)",
+)
+
+
+def is_maps_configured() -> bool:
+    """True when the backend may call a maps provider.
+
+    False means the map endpoints answer with an empty map and a warning
+    instead of pretending to know where a place is.
+    """
+    if MAPS_PROVIDER == "none":
+        return False
+    if MAPS_PROVIDER == "google":
+        return bool(MAPS_API_KEY)
+    return True
+
+
 def is_ai_configured() -> bool:
     """True when the backend may call the real LLM.
 

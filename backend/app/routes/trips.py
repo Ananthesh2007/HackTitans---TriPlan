@@ -7,8 +7,10 @@ from app.ai.coordinator import (
     validate_plan,
 )
 from app.errors import AppError
+from app.models.maps import TripMapResponse
 from app.models.trip import ModifyRequest, ModifyResponse, Trip, TripRequest
 from app.services.budget import estimate_budget, flag_budget_issues
+from app.services.maps import build_trip_map
 from app.store import TRIPS, save_trip, get_trip, delete_trip
 
 router = APIRouter(prefix="/api/trips", tags=["trips"])
@@ -119,3 +121,22 @@ def calculate_budget(trip_id: str):
         "estimated_costs": costs.model_dump(),
         "budget_status": flags,
     }
+
+
+@router.get("/{trip_id}/map", response_model=TripMapResponse)
+def get_trip_map(trip_id: str):
+    """Build the map of every day of a trip.
+
+    Each activity of a day becomes a stop, and the route between the stops
+    is worked out. Days whose places cannot be located still appear, with a
+    warning, so the frontend can say which part of the plan could not be
+    found on the map.
+
+    Nothing is invented. A place that cannot be found has no coordinates.
+    """
+    trip_data = get_trip(trip_id)
+    if not trip_data:
+        raise AppError(404, "trip_not_found", f"Trip '{trip_id}' not found.")
+
+    trip = Trip(**trip_data)
+    return build_trip_map(trip)

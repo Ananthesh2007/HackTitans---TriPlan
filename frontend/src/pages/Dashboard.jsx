@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
-import { getTrip } from '../services/api.js'
+import { getTrip, getTripMap } from '../services/api.js'
 import ItineraryCard from '../components/ItineraryCard.jsx'
 import BudgetCard from '../components/BudgetCard.jsx'
 import ChatAssistant from '../components/ChatAssistant.jsx'
 import BookingOptions from '../components/BookingOptions.jsx'
+import MapView from '../components/MapView.jsx'
 
 function TripLoader({ tripId, initialTrip }) {
   const [state, setState] = useState(
@@ -13,6 +14,8 @@ function TripLoader({ tripId, initialTrip }) {
       : { status: 'loading', trip: null, message: '' },
   )
   const [attempt, setAttempt] = useState(0)
+  // The map is loaded on its own, so a slow or failing map never blocks the plan.
+  const [mapState, setMapState] = useState({ status: 'loading', map: null, message: '' })
 
   useEffect(() => {
     // A trip passed from the form is already loaded, so there is nothing to fetch.
@@ -33,9 +36,33 @@ function TripLoader({ tripId, initialTrip }) {
     }
   }, [tripId, attempt, initialTrip])
 
+  // The map is fetched separately from the trip, so a maps problem never
+  // stops the itinerary from showing. The version is bumped when the plan
+  // changes, so the map is rebuilt for the new places.
+  const [mapVersion, setMapVersion] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+
+    getTripMap(tripId)
+      .then((map) => {
+        if (!cancelled) setMapState({ status: 'ready', map, message: '' })
+      })
+      .catch((error) => {
+        if (!cancelled) setMapState({ status: 'error', map: null, message: error.message })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [tripId, mapVersion])
+
   // Called when the user applies a change proposed by the assistant.
   function handleApply(trip) {
     setState({ status: 'ready', trip, message: '' })
+    // The places may have changed, so the map is fetched again.
+    setMapState({ status: 'loading', map: null, message: '' })
+    setMapVersion((current) => current + 1)
   }
 
   function handleRetry() {
@@ -88,6 +115,9 @@ function TripLoader({ tripId, initialTrip }) {
       </p>
       <p className="mt-1 text-sm text-muted">Costs are estimates, not confirmed prices.</p>
       <p className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
+        <a href="#map" className="btn-link text-accent">
+          See the plan on a map
+        </a>
         <a href="#booking" className="btn-link text-accent">
           Book flights, buses, trains, and hotels
         </a>
@@ -98,6 +128,14 @@ function TripLoader({ tripId, initialTrip }) {
 
       <div className="mt-8">
         <BudgetCard budget={trip.budget} costs={trip.estimated_costs} currency={trip.currency} />
+      </div>
+
+      <div id="map" className="mt-10">
+        <MapView
+          map={mapState.map}
+          isLoading={mapState.status === 'loading'}
+          error={mapState.status === 'error' ? mapState.message : ''}
+        />
       </div>
 
       <div className="mt-10 space-y-10">
