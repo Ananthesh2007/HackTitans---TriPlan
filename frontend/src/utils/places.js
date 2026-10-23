@@ -117,6 +117,7 @@ const PLACES = [
 // The places, ready to be searched.
 export const PLACE_SUGGESTIONS = PLACES.map((place) => ({
   ...place,
+  value: place.name,
   label: place.name,
   secondary: place.state,
 }))

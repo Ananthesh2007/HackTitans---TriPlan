@@ -102,6 +102,13 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
     }
   }
 
+  function handlePlaceChange(name, value) {
+    setValues((current) => ({ ...current, [name]: value }))
+    if (errors[name]) {
+      setErrors((current) => ({ ...current, [name]: undefined }))
+    }
+  }
+
   function toggleInterest(value) {
     setValues((current) => ({
       ...current,
@@ -154,7 +161,7 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
           id="origin"
           label="Travelling from"
           value={values.origin}
-          onChange={(value) => setValues((current) => ({ ...current, origin: value }))}
+          onChange={(value) => handlePlaceChange('origin', value)}
           placeholder="For example, Bengaluru"
           error={errors.origin}
           describedBy={errors.origin ? 'origin-error' : undefined}
@@ -166,7 +173,7 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
           id="destination"
           label="Destination"
           value={values.destination}
-          onChange={(value) => setValues((current) => ({ ...current, destination: value }))}
+          onChange={(value) => handlePlaceChange('destination', value)}
           placeholder="For example, Coorg"
           error={errors.destination}
           describedBy={errors.destination ? 'destination-error' : undefined}
