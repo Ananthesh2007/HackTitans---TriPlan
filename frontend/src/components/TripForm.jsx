@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PlaceInput from './PlaceInput.jsx'
 
 const INTERESTS = [
   { value: 'nature', label: 'Nature' },
@@ -148,24 +149,27 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      <Field id="origin" label="Travelling from">
-        <input
-          type="text"
+      <Field id="origin" label="Travelling from" error={errors.origin}>
+        <PlaceInput
+          id="origin"
+          label="Travelling from"
+          value={values.origin}
+          onChange={(value) => setValues((current) => ({ ...current, origin: value }))}
           placeholder="For example, Bengaluru"
-          autoComplete="off"
-          maxLength={80}
-          className={inputClass(false)}
-          {...fieldProps('origin')}
+          error={errors.origin}
+          describedBy={errors.origin ? 'origin-error' : undefined}
         />
       </Field>
 
       <Field id="destination" label="Destination" error={errors.destination}>
-        <input
-          type="text"
+        <PlaceInput
+          id="destination"
+          label="Destination"
+          value={values.destination}
+          onChange={(value) => setValues((current) => ({ ...current, destination: value }))}
           placeholder="For example, Coorg"
-          autoComplete="off"
-          className={inputClass(errors.destination)}
-          {...fieldProps('destination')}
+          error={errors.destination}
+          describedBy={errors.destination ? 'destination-error' : undefined}
         />
       </Field>
 

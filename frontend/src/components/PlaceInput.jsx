@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { geocodePlace } from '../services/api.js'
-import { searchPlaces } from '../utils/places.js'
+import { searchPlaces, searchPopular } from '../utils/places.js'
 import { inputClass } from './Field.jsx'
 
 // A text box that suggests places as the user types.
@@ -40,8 +40,9 @@ export default function PlaceInput({
   // next to the new suggestions.
   const lookedUp = useRef('')
 
-  // The bundled suggestions for what has been typed.
-  const localOptions = useMemo(() => searchPlaces(value), [value])
+  // The bundled suggestions for what has been typed, plus the popular
+  // cities that appear before anything is typed.
+  const localOptions = useMemo(() => (value.trim() ? searchPlaces(value) : searchPopular()), [value])
 
   // Ask the backend about the place once the typing has settled. A place
   // that is already in the bundled list does not need the lookup.
@@ -213,30 +214,36 @@ export default function PlaceInput({
           aria-label={label ? `${label} suggestions` : 'Suggestions'}
           className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-line bg-card py-1 shadow-lg"
         >
-          {visibleOptions.map((option, index) => (
-            <li
-              key={`${option.value}-${index}`}
-              id={`${listId}-option-${index}`}
-              role="option"
-              aria-selected={index === activeIndex}
-            >
-              <button
-                type="button"
-                // The mouse down runs before the blur, so the click is not
-                // lost when the list closes.
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => choose(option)}
-                className={`flex w-full flex-col items-start gap-0.5 px-4 py-2 text-left ${
-                  index === activeIndex ? 'bg-surface' : ''
-                }`}
+          {visibleOptions.map((option, index) => {
+            const iconLetter = option.icon === 'airport' ? '✈' : '●'
+            return (
+              <li
+                key={`${option.value}-${index}`}
+                id={`${listId}-option-${index}`}
+                role="option"
+                aria-selected={index === activeIndex}
               >
-                <span className="text-ink">{option.label}</span>
-                {option.secondary && (
-                  <span className="text-xs text-muted">{option.secondary}</span>
-                )}
-              </button>
-            </li>
-          ))}
+                <button
+                  type="button"
+                  // The mouse down runs before the blur, so the click is not
+                  // lost when the list closes.
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => choose(option)}
+                  className={`flex items-start gap-2 px-4 py-2 text-left ${
+                    index === activeIndex ? 'bg-surface' : ''
+                  }`}
+                >
+                  <span className="shrink-0 text-base leading-none">{iconLetter}</span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-ink">{option.label}</span>
+                    {option.secondary && (
+                      <span className="text-xs text-muted">{option.secondary}</span>
+                    )}
+                  </div>
+                </button>
+              </li>
+            )
+          })}
         </ul>
       )}
 

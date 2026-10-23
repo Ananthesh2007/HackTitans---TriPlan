@@ -6,24 +6,26 @@
 // (`GET /api/maps/geocode`), so anything the maps provider knows can be
 // used as well.
 
-// The name, the state it is in, and the kind of place it is.
+// The name, the state it is in, the kind of place it is, and the icon that
+// goes next to it in the dropdown. The icons are built-in SVG symbols, so
+// the dropdown can show them without another image request.
 const PLACES = [
   // Airports
-  { name: 'Kempegowda International Airport', state: 'Karnataka', type: 'airport' },
-  { name: 'Chhatrapati Shivaji Maharaj International Airport', state: 'Maharashtra', type: 'airport' },
-  { name: 'Indira Gandhi International Airport', state: 'Delhi', type: 'airport' },
-  { name: 'Rajiv Gandhi International Airport', state: 'Telangana', type: 'airport' },
-  { name: 'Chennai International Airport', state: 'Tamil Nadu', type: 'airport' },
-  { name: 'Netaji Subhas Chandra Bose International Airport', state: 'West Bengal', type: 'airport' },
-  { name: 'Sardar Vallabhbhai Patel International Airport', state: 'Gujarat', type: 'airport' },
-  { name: 'Cochin International Airport', state: 'Kerala', type: 'airport' },
-  { name: 'Lokpriya Gopinath Bordoloi International Airport', state: 'Assam', type: 'airport' },
-  { name: 'Jaipur International Airport', state: 'Rajasthan', type: 'airport' },
-  { name: 'Lucknow International Airport', state: 'Uttar Pradesh', type: 'airport' },
-  { name: 'Bengaluru International Airport', state: 'Karnataka', type: 'airport' },
-  { name: 'Amritsar International Airport', state: 'Punjab', type: 'airport' },
-  { name: 'Goa Dabolim Airport', state: 'Goa', type: 'airport' },
-  { name: 'Chandigarh International Airport', state: 'Punjab', type: 'airport' },
+  { name: 'Kempegowda International Airport', state: 'Karnataka', type: 'airport', icon: 'airport' },
+  { name: 'Chhatrapati Shivaji Maharaj International Airport', state: 'Maharashtra', type: 'airport', icon: 'airport' },
+  { name: 'Indira Gandhi International Airport', state: 'Delhi', type: 'airport', icon: 'airport' },
+  { name: 'Rajiv Gandhi International Airport', state: 'Telangana', type: 'airport', icon: 'airport' },
+  { name: 'Chennai International Airport', state: 'Tamil Nadu', type: 'airport', icon: 'airport' },
+  { name: 'Netaji Subhas Chandra Bose International Airport', state: 'West Bengal', type: 'airport', icon: 'airport' },
+  { name: 'Sardar Vallabhbhai Patel International Airport', state: 'Gujarat', type: 'airport', icon: 'airport' },
+  { name: 'Cochin International Airport', state: 'Kerala', type: 'airport', icon: 'airport' },
+  { name: 'Lokpriya Gopinath Bordoloi International Airport', state: 'Assam', type: 'airport', icon: 'airport' },
+  { name: 'Jaipur International Airport', state: 'Rajasthan', type: 'airport', icon: 'airport' },
+  { name: 'Lucknow International Airport', state: 'Uttar Pradesh', type: 'airport', icon: 'airport' },
+  { name: 'Bengaluru International Airport', state: 'Karnataka', type: 'airport', icon: 'airport' },
+  { name: 'Amritsar International Airport', state: 'Punjab', type: 'airport', icon: 'airport' },
+  { name: 'Goa Dabolim Airport', state: 'Goa', type: 'airport', icon: 'airport' },
+  { name: 'Chandigarh International Airport', state: 'Punjab', type: 'airport', icon: 'airport' },
 
   // Cities
   { name: 'Mumbai', state: 'Maharashtra', type: 'city' },
@@ -119,6 +121,7 @@ export const PLACE_SUGGESTIONS = PLACES.map((place) => ({
   ...place,
   label: place.name,
   secondary: place.state,
+  icon: place.icon,
 }))
 
 // The places that match what the user has typed so far.
@@ -142,4 +145,10 @@ export function searchPlaces(query, limit = 8) {
   }
 
   return [...starts, ...contains].slice(0, limit)
+}
+
+// The popular cities to show when the box is first opened. They are the
+// most-visited destinations, so they are useful without any typing.
+export function searchPopular(limit = 6) {
+  return PLACE_SUGGESTIONS.filter((place) => place.type === 'city').slice(0, limit)
 }
