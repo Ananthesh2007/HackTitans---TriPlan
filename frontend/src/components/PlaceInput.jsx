@@ -17,6 +17,26 @@ import { inputClass } from './Field.jsx'
 
 const LOOKUP_DELAY_MS = 350
 
+function LocationIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="mt-0.5 size-5 shrink-0 text-accent"
+    >
+      <path
+        d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
 export default function PlaceInput({
   id,
   value,
@@ -214,36 +234,33 @@ export default function PlaceInput({
           aria-label={label ? `${label} suggestions` : 'Suggestions'}
           className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-line bg-card py-1 shadow-lg"
         >
-          {visibleOptions.map((option, index) => {
-            const iconLetter = option.icon === 'airport' ? '✈' : '●'
-            return (
-              <li
-                key={`${option.value}-${index}`}
-                id={`${listId}-option-${index}`}
-                role="option"
-                aria-selected={index === activeIndex}
+          {visibleOptions.map((option, index) => (
+            <li
+              key={`${option.value}-${index}`}
+              id={`${listId}-option-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+            >
+              <button
+                type="button"
+                // The mouse down runs before the blur, so the click is not
+                // lost when the list closes.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => choose(option)}
+                className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface ${
+                  index === activeIndex ? 'bg-surface' : ''
+                }`}
               >
-                <button
-                  type="button"
-                  // The mouse down runs before the blur, so the click is not
-                  // lost when the list closes.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => choose(option)}
-                  className={`flex items-start gap-2 px-4 py-2 text-left ${
-                    index === activeIndex ? 'bg-surface' : ''
-                  }`}
-                >
-                  <span className="shrink-0 text-base leading-none">{iconLetter}</span>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-ink">{option.label}</span>
-                    {option.secondary && (
-                      <span className="text-xs text-muted">{option.secondary}</span>
-                    )}
-                  </div>
-                </button>
-              </li>
-            )
-          })}
+                <LocationIcon />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate font-medium text-ink">{option.label}</span>
+                  {option.secondary && (
+                    <span className="truncate text-xs text-muted">{option.secondary}</span>
+                  )}
+                </span>
+              </button>
+            </li>
+          ))}
         </ul>
       )}
 

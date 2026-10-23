@@ -6,9 +6,7 @@
 // (`GET /api/maps/geocode`), so anything the maps provider knows can be
 // used as well.
 
-// The name, the state it is in, the kind of place it is, and the icon that
-// goes next to it in the dropdown. The icons are built-in SVG symbols, so
-// the dropdown can show them without another image request.
+// The name, state, and kind of each place shown in the dropdown.
 const PLACES = [
   // Airports
   { name: 'Kempegowda International Airport', state: 'Karnataka', type: 'airport', icon: 'airport' },
@@ -121,7 +119,6 @@ export const PLACE_SUGGESTIONS = PLACES.map((place) => ({
   ...place,
   label: place.name,
   secondary: place.state,
-  icon: place.icon,
 }))
 
 // The places that match what the user has typed so far.
