@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import PlaceInput from './PlaceInput.jsx'
+import { staggerContainer, staggerItem } from '../lib/motion.js'
 
 const INTERESTS = [
   { value: 'nature', label: 'Nature' },
@@ -155,8 +157,16 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      <Field id="origin" label="Travelling from" error={errors.origin}>
+    <motion.form
+      onSubmit={handleSubmit}
+      noValidate
+      className="space-y-6"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={staggerItem}>
+        <Field id="origin" label="Travelling from" error={errors.origin}>
         <PlaceInput
           id="origin"
           label="Travelling from"
@@ -166,9 +176,11 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
           error={errors.origin}
           describedBy={errors.origin ? 'origin-error' : undefined}
         />
-      </Field>
+        </Field>
+      </motion.div>
 
-      <Field id="destination" label="Destination" error={errors.destination}>
+      <motion.div variants={staggerItem}>
+        <Field id="destination" label="Destination" error={errors.destination}>
         <PlaceInput
           id="destination"
           label="Destination"
@@ -178,18 +190,21 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
           error={errors.destination}
           describedBy={errors.destination ? 'destination-error' : undefined}
         />
-      </Field>
+        </Field>
+      </motion.div>
 
-      <Field id="travelDate" label="Travel date" error={errors.travelDate}>
+      <motion.div variants={staggerItem}>
+        <Field id="travelDate" label="Travel date" error={errors.travelDate}>
         <input
           type="date"
           min={todayString()}
           className={inputClass(errors.travelDate)}
           {...fieldProps('travelDate')}
         />
-      </Field>
+        </Field>
+      </motion.div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <motion.div variants={staggerItem} className="grid gap-6 sm:grid-cols-2">
         <Field id="days" label="Number of days" error={errors.days}>
           <input
             type="number"
@@ -211,9 +226,10 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
             {...fieldProps('people')}
           />
         </Field>
-      </div>
+      </motion.div>
 
-      <Field id="budget" label="Total budget for the group (INR)" error={errors.budget}>
+      <motion.div variants={staggerItem}>
+        <Field id="budget" label="Total budget for the group (INR)" error={errors.budget}>
         <input
           type="number"
           min="1"
@@ -222,9 +238,10 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
           className={inputClass(errors.budget)}
           {...fieldProps('budget')}
         />
-      </Field>
+        </Field>
+      </motion.div>
 
-      <fieldset>
+      <motion.fieldset variants={staggerItem}>
         <legend className="font-medium">Interests (optional)</legend>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {INTERESTS.map(({ value, label }) => (
@@ -239,9 +256,10 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
             </label>
           ))}
         </div>
-      </fieldset>
+      </motion.fieldset>
 
-      <Field id="diet" label="Food preference">
+      <motion.div variants={staggerItem}>
+        <Field id="diet" label="Food preference">
         <select className={inputClass(false)} {...fieldProps('diet')}>
           {DIETS.map(({ value, label }) => (
             <option key={value} value={value}>
@@ -249,15 +267,19 @@ export default function TripForm({ onSubmit, isSubmitting = false }) {
             </option>
           ))}
         </select>
-      </Field>
+        </Field>
+      </motion.div>
 
-      <button
+      <motion.button
+        variants={staggerItem}
         type="submit"
         disabled={isSubmitting}
         className="btn btn-primary"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
       >
         {isSubmitting ? 'Generating itinerary...' : 'Generate itinerary'}
-      </button>
-    </form>
+      </motion.button>
+    </motion.form>
   )
 }

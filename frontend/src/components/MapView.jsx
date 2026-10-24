@@ -3,14 +3,13 @@ import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// The tiles are dark, to match the rest of the interface. Set VITE_MAP_TILE_URL
-// to use a different tile server.
+// The tiles are open source, to match the rest of the interface without CARTO watermarks.
 const TILE_URL =
   import.meta.env.VITE_MAP_TILE_URL ||
-  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 const TILE_ATTRIBUTION =
   import.meta.env.VITE_MAP_TILE_ATTRIBUTION ||
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
 // A marker drawn as a numbered dot, so it matches the design system and
 // needs no image files.

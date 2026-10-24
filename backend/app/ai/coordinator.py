@@ -344,6 +344,27 @@ def _mock_modification(trip: Trip, message: str) -> tuple[str, str]:
     """
     lowered = message.lower()
 
+    # Detect flight search queries and guide user to the flights page
+    if any(word in lowered for word in ("flight", "flights", "fly", "airline", "indigo", "air india", "akasa")):
+        return (
+            "To search for flights, please use the Flights page. You can find it in the booking options section below, or navigate to the Flights tab. The flight search works with filters for price, departure time, and more—no AI configuration needed!",
+            None,
+        )
+
+    # Detect hotel search queries
+    if any(word in lowered for word in ("hotel", "hotels", "accommodation", "stay", "room", "resort")):
+        return (
+            "To search for hotels, please use the Hotels page. You can find it in the booking options section below, or navigate to the Hotels tab. The hotel search works with filters for price, check-in time, and amenities—no AI configuration needed!",
+            None,
+        )
+
+    # Detect transport search queries
+    if any(word in lowered for word in ("bus", "buses", "train", "trains", "transport", "ksrtc", "redbus", "irctc")):
+        return (
+            "To search for buses and trains, please use the Transport page. You can find it in the booking options section below, or navigate to the Transport tab. The search works with filters for AC/Non-AC, seating type, price, and more—no AI configuration needed!",
+            None,
+        )
+
     target = None
     target_cost = 0.0
     for day_index, day in enumerate(trip.itinerary):
@@ -362,6 +383,6 @@ def _mock_modification(trip: Trip, message: str) -> tuple[str, str]:
         )
 
     return (
-        "The AI service is not configured, so the plan is unchanged.",
-        "The AI service is not configured, so your request was not applied.",
+        "The AI service is not configured for itinerary modifications. However, you can still search for flights, hotels, and transport using the dedicated search pages below—they work without any AI configuration!",
+        None,
     )

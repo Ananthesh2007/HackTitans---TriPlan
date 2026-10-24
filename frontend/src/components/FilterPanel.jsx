@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   AC_OPTIONS,
   DEPARTURE_OPTIONS,
   SEAT_OPTIONS,
   countActiveFilters,
 } from '../utils/filters.js'
+import { staggerContainer, staggerItem, slideInFromBottom } from '../lib/motion.js'
 
 // The filters for a search page.
 //
@@ -17,16 +19,21 @@ import {
 function RadioGroup({ legend, name, options, value, onChange, columns = 2 }) {
   return (
     <fieldset>
-      <legend className="label-md">{legend}</legend>
-      <div
+      <legend className="label-md text-slate-100">{legend}</legend>
+      <motion.div
         className={`mt-2 grid gap-2 ${
           columns === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'
         }`}
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
       >
         {options.map((option) => (
-          <label
+          <motion.label
             key={option.value}
-            className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm"
+            variants={staggerItem}
+            className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm text-slate-200 hover:border-primary/50 transition-colors cursor-pointer"
+            whileHover={{ scale: 1.02 }}
           >
             <input
               type="radio"
@@ -37,9 +44,9 @@ function RadioGroup({ legend, name, options, value, onChange, columns = 2 }) {
               className="size-4 accent-primary"
             />
             {option.label}
-          </label>
+          </motion.label>
         ))}
-      </div>
+      </motion.div>
     </fieldset>
   )
 }
@@ -48,12 +55,19 @@ function RadioGroup({ legend, name, options, value, onChange, columns = 2 }) {
 function CheckGroup({ legend, name, options, values, onToggle }) {
   return (
     <fieldset>
-      <legend className="label-md">{legend}</legend>
-      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <legend className="label-md text-slate-100">{legend}</legend>
+      <motion.div
+        className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+      >
         {options.map((option) => (
-          <label
+          <motion.label
             key={option.value}
-            className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm"
+            variants={staggerItem}
+            className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm text-slate-200 hover:border-primary/50 transition-colors cursor-pointer"
+            whileHover={{ scale: 1.02 }}
           >
             <input
               type="checkbox"
@@ -64,9 +78,9 @@ function CheckGroup({ legend, name, options, values, onToggle }) {
               className="size-4 accent-primary"
             />
             {option.label}
-          </label>
+          </motion.label>
         ))}
-      </div>
+      </motion.div>
     </fieldset>
   )
 }
@@ -75,10 +89,10 @@ function CheckGroup({ legend, name, options, values, onToggle }) {
 function PriceRange({ filters, onChange }) {
   return (
     <fieldset>
-      <legend className="label-md">Price range (INR)</legend>
+      <legend className="label-md text-slate-100">Price range (INR)</legend>
       <div className="mt-2 grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="priceMin" className="block text-sm text-muted">
+          <label htmlFor="priceMin" className="block text-sm text-slate-400">
             Lowest
           </label>
           <input
@@ -95,7 +109,7 @@ function PriceRange({ filters, onChange }) {
           />
         </div>
         <div>
-          <label htmlFor="priceMax" className="block text-sm text-muted">
+          <label htmlFor="priceMax" className="block text-sm text-slate-400">
             Highest
           </label>
           <input
@@ -147,28 +161,40 @@ export default function FilterPanel({
   return (
     <section aria-labelledby="filters-heading" className="mt-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="filters-heading" className="headline-sm">
+        <h2 id="filters-heading" className="headline-sm text-slate-100">
           Filters
           {activeCount > 0 && (
-            <span className="ml-2 text-sm font-normal text-muted">
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="ml-2 text-sm font-normal text-slate-400"
+            >
               {activeCount} {activeCount === 1 ? 'filter' : 'filters'} on
-            </span>
+            </motion.span>
           )}
         </h2>
 
-        <button
+        <motion.button
           type="button"
           onClick={() => setIsOpen((current) => !current)}
           aria-expanded={isOpen}
           aria-controls="filters-body"
           className="btn btn-secondary btn-sm sm:hidden"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           {isOpen ? 'Hide filters' : `Filters${activeCount > 0 ? ` (${activeCount})` : ''}`}
-        </button>
+        </motion.button>
       </div>
 
-      <div id="filters-body" className={`mt-4 ${isOpen ? 'block' : 'hidden sm:block'}`}>
-        <div className="panel space-y-6">
+      <AnimatePresence mode="wait">
+        <div id="filters-body" className={`mt-4 ${isOpen ? 'block' : 'hidden sm:block'}`}>
+          <motion.div
+            className="glass-panel p-6 space-y-6 scrollbar-custom"
+            variants={slideInFromBottom}
+            initial="hidden"
+            animate="show"
+          >
           {showVehicle && (
             <RadioGroup
               legend="AC"
@@ -211,12 +237,19 @@ export default function FilterPanel({
           />
 
           {activeCount > 0 && (
-            <button type="button" onClick={onReset} className="btn btn-secondary btn-sm">
+            <motion.button
+              type="button"
+              onClick={onReset}
+              className="btn btn-secondary btn-sm"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
               Clear all filters
-            </button>
+            </motion.button>
           )}
-        </div>
+        </motion.div>
       </div>
+      </AnimatePresence>
     </section>
   )
 }

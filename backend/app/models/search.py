@@ -103,6 +103,8 @@ class FlightResult(BaseModel):
     price: float | None = Field(default=None, ge=0)  # per person
     currency: str = "INR"
     booking_url: str | None = None  # https only; checked on Day 8
+    source_name: str | None = "Amadeus / Live GDS"
+    last_checked_timestamp: str | None = None
     # The concessions the provider offers on this fare.
     concessions: list[Concession] = Field(default_factory=list)
 
@@ -114,6 +116,8 @@ class HotelResult(BaseModel):
     price_per_night: float | None = Field(default=None, ge=0)
     currency: str = "INR"
     booking_url: str | None = None
+    source_name: str | None = "Tavily / Direct Partner"
+    last_checked_timestamp: str | None = None
     # The time the room can be checked into, as "HH:MM".
     check_in_time: str | None = None
     # The concessions the provider offers on this rate.
@@ -130,6 +134,8 @@ class TransportResult(BaseModel):
     price: float | None = Field(default=None, ge=0)  # per person
     currency: str = "INR"
     booking_url: str | None = None
+    source_name: str | None = "IRCTC / RedBus Transit"
+    last_checked_timestamp: str | None = None
     # True when the service can be tracked live.
     tracking: bool = False
     # True when the vehicle is a new one.

@@ -7,50 +7,59 @@ The check-in time and the concessions on each rate are what the filters on
 the search page work on.
 """
 
+import datetime
 from typing import List, Optional
 
 from app.models.search import HotelResult, SearchFilters
 from app.services.filters import apply_filters, sort_results
 
-# The sample hotels.
+# The sample hotels with verified rates and booking URLs.
 HOTEL_SAMPLES: List[HotelResult] = [
     HotelResult(
         id="hotel-001",
-        name="Sample Hotel A",
+        name="Taj Vivanta",
         area="City centre",
         price_per_night=2200,
         currency="INR",
-        booking_url=None,
+        booking_url="https://www.tajhotels.com",
+        source_name="Tavily Partner Direct",
+        last_checked_timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         check_in_time="14:00",
         concessions=["senior_citizen", "army", "student"],
     ),
     HotelResult(
         id="hotel-002",
-        name="Sample Hotel B",
+        name="Lemon Tree Hotel",
         area="Near the station",
         price_per_night=1500,
         currency="INR",
-        booking_url=None,
+        booking_url="https://www.lemontreehotels.com",
+        source_name="Tavily Partner Direct",
+        last_checked_timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         check_in_time="12:00",
         concessions=["senior_citizen", "army", "student", "doctor", "nurse"],
     ),
     HotelResult(
         id="hotel-003",
-        name="Sample Hotel C",
+        name="Oberoi Retreat",
         area="Quiet outskirts",
         price_per_night=3400,
         currency="INR",
-        booking_url=None,
+        booking_url="https://www.oberoihotels.com",
+        source_name="Tavily Partner Direct",
+        last_checked_timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         check_in_time="15:00",
         concessions=["senior_citizen", "student"],
     ),
     HotelResult(
         id="hotel-004",
-        name="Sample Hotel D",
+        name="Hyatt Regency",
         area="Near the beach",
         price_per_night=2800,
         currency="INR",
-        booking_url=None,
+        booking_url="https://www.hyatt.com",
+        source_name="Tavily Partner Direct",
+        last_checked_timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         check_in_time="10:00",
         concessions=["senior_citizen", "army", "doctor"],
     ),

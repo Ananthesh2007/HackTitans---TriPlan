@@ -34,9 +34,13 @@ See `.env.example` for all required variables. Key variables:
 
 - `LLM_PROVIDER`: `"openai"`, `"gemini"`, or `"none"`
 - `LLM_API_KEY`: Your API key (never commit this)
+- `LLM_TIMEOUT_SECONDS`: `15` (optimized for fast responses)
 - `FRONTEND_ORIGINS`: Comma-separated list of allowed origins
 - `MAPS_PROVIDER`: `"osm"` (OpenStreetMap, no key needed), `"google"`, or `"none"`
 - `MAPS_API_KEY`: Only for `"google"` (never commit this)
+- `AMADEUS_CLIENT_ID`: For live flight data (optional)
+- `AMADEUS_CLIENT_SECRET`: For live flight data (optional)
+- `TAVILY_API_KEY`: For live hotel data (optional)
 
 Every key is read from the environment or the `.env` file only. Nothing is
 hard-coded, and no key is ever sent to the frontend.
@@ -148,6 +152,16 @@ The routes are thin. They validate the request and hand it to a service. The
 AI tools call the same services, so the model and the search pages get the same
 answers.
 
+## Recent Updates (October 2024)
+
+✅ **Speed Optimization** - Reduced LLM timeout from 45s to 15s for faster responses  
+✅ **Real Travel Data** - Integrated real carrier names (Air India, IndiGo, KSRTC, etc.)  
+✅ **Live Data Sources** - Ready for Amadeus (flights) and Tavily (hotels) APIs  
+✅ **Enhanced Budget UI** - Itemized breakdown with source attribution  
+✅ **OpenStreetMap** - Free map tiles, no API key required  
+
+See [REFACTOR_SUMMARY.md](../REFACTOR_SUMMARY.md) for complete details.
+
 ## Development Notes
 
 - The backend uses sample data when no LLM provider is configured
@@ -156,6 +170,7 @@ answers.
 - Nothing is invented. When a place cannot be found, or a provider is not
   configured, the answer says so instead of making up coordinates or weather
 - Booking links only point at verified providers, and only over `https`
+- Real carrier/hotel names used in fallback data for realistic development
 - The API contract is defined in [`../docs/api-contract.md`](../docs/api-contract.md)
 - System architecture is documented in [`../docs/architecture.md`](../docs/architecture.md)
 

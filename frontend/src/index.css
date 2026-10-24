@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /*
-  TriPlan design system — "TriPlan Dark".
-  A high-contrast, aviation-oriented dark system: bold Urbanist typography,
-  bright white text, and a restrained red accent.
+  TriPlan design system — "Ocean Wanderlust".
+  A dark, travel-inspired theme with oceanic blues, cyans, and sunset accents.
+  Features 21st.dev inspired glassmorphic surfaces with subtle glows.
 */
 
 @theme {
@@ -11,25 +11,26 @@
   --font-sans: "Urbanist", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Urbanist", ui-sans-serif, system-ui, sans-serif;
 
-  /* Colors */
-  --color-canvas: #1a1a1a; /* neutral — the page backdrop */
-  --color-surface: #252831; /* overlays and utility containers */
-  --color-card: #1b1c1d; /* tertiary — cards and elevated panels */
-  --color-ink: #ffffff; /* on-surface — primary text */
-  --color-muted: #a3a8af; /* secondary text on dark */
-  --color-line: #33353a; /* hairline dividers and input borders */
-  --color-primary: #a01d26; /* brand red — fills, chips, accents */
-  --color-primary-hover: #8a1922;
+  /* Colors — Ocean Wanderlust */
+  --color-canvas: #0b0f19; /* Ocean Dark — deep navy backdrop */
+  --color-surface: #141b2e; /* Elevated surfaces with slight blue tint */
+  --color-card: #1a2332; /* Cards and panels */
+  --color-ink: #f1f5f9; /* Primary text — slate-100 */
+  --color-muted: #94a3b8; /* Secondary text — slate-400 */
+  --color-line: #1e293b; /* Hairline dividers — slate-800 */
+  --color-primary: #3b82f6; /* Ocean Blue — primary actions */
+  --color-primary-hover: #2563eb;
   --color-on-primary: #ffffff;
-  --color-accent: #e05a62; /* red used as text on dark, for legibility */
-  --color-error: #d13b45; /* destructive and validation states */
+  --color-accent: #06b6d4; /* Cyan — highlights and accents */
+  --color-secondary: #f97316; /* Sunset Orange — CTAs and warnings */
+  --color-error: #ef4444; /* Destructive states */
 
-  /* Shape: pills and large radii dominate; sharp corners are avoided. */
+  /* Shape: modern rounded corners with glassmorphic feel */
   --radius: 4px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 30px;
-  --radius-xl: 32px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 }
 
@@ -95,7 +96,7 @@
   .headline-sm {
     font-family: var(--font-display);
     font-size: 18px;
-    font-weight: 400;
+    font-weight: 600;
     line-height: 1.4;
     letter-spacing: 0.5px;
   }
@@ -148,7 +149,7 @@
     letter-spacing: 0.5px;
   }
 
-  /* Buttons: a white pill with red text is the primary action. */
+  /* Buttons: Ocean Blue primary with smooth transitions */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -166,33 +167,35 @@
     text-align: center;
     text-decoration: none;
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: all 0.2s ease;
   }
 
   .btn:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
   .btn-primary {
-    background-color: var(--color-ink);
-    color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   }
 
   .btn-primary:hover:not(:disabled) {
-    background-color: var(--color-primary);
-    color: var(--color-on-primary);
+    background-color: var(--color-primary-hover);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+    transform: translateY(-1px);
   }
 
   .btn-secondary {
     background-color: transparent;
     color: var(--color-ink);
-    border-color: var(--color-ink);
+    border-color: var(--color-line);
   }
 
   .btn-secondary:hover:not(:disabled) {
-    background-color: var(--color-ink);
-    color: var(--color-primary);
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: var(--color-primary);
   }
 
   .btn-sm {
@@ -203,7 +206,7 @@
 
   .btn-link {
     background-color: transparent;
-    color: var(--color-ink);
+    color: var(--color-accent);
     font-family: var(--font-sans);
     font-size: 16px;
     font-weight: 400;
@@ -213,28 +216,58 @@
   }
 
   .btn-link:hover {
-    color: var(--color-accent);
+    color: var(--color-primary);
   }
 
-  /* Cards and panels sit on the flat dark backdrop, separated by tone only. */
+  /* Glassmorphic panels — 21st.dev inspired */
+  .glass-panel {
+    background: rgba(20, 27, 46, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 1px rgba(59, 130, 246, 0.2);
+  }
+
+  .glass-panel-hover {
+    background: rgba(20, 27, 46, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 1px rgba(59, 130, 246, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .glass-panel-hover:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.2);
+    transform: translateY(-2px);
+  }
+
+  /* Cards and panels with glassmorphic styling */
   .card {
-    background-color: var(--color-card);
+    background: rgba(26, 35, 50, 0.8);
+    backdrop-filter: blur(8px);
     color: var(--color-ink);
+    border: 1px solid rgba(59, 130, 246, 0.1);
     border-radius: var(--radius-lg);
     padding: 60px;
   }
 
   .panel {
-    background-color: var(--color-surface);
+    background: rgba(20, 27, 46, 0.6);
+    backdrop-filter: blur(10px);
     color: var(--color-ink);
+    border: 1px solid rgba(59, 130, 246, 0.12);
     border-radius: var(--radius-lg);
     padding: 20px 24px;
   }
 
-  /* Inputs follow the dark surface language with clear white text. */
+  /* Inputs with oceanic styling */
   .input {
     width: 100%;
-    background-color: var(--color-card);
+    background-color: rgba(11, 15, 25, 0.6);
     color: var(--color-ink);
     border: 1px solid var(--color-line);
     border-radius: var(--radius-md);
@@ -243,6 +276,7 @@
     font-size: 16px;
     line-height: 1.5;
     letter-spacing: 0.5px;
+    transition: all 0.2s ease;
   }
 
   .input::placeholder {
@@ -250,12 +284,14 @@
   }
 
   .input:hover {
-    border-color: #4a4d53;
+    border-color: rgba(59, 130, 246, 0.3);
   }
 
   .input:focus,
   .input:focus-visible {
     border-color: var(--color-accent);
+    background-color: rgba(11, 15, 25, 0.8);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
     outline: none;
   }
 
@@ -263,20 +299,51 @@
     border-color: var(--color-error);
   }
 
-  /* Chips: compact, unmistakably interactive, full rounding. */
-  .chip {
+  /* Badge styles */
+  .badge {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    background-color: var(--color-primary);
-    color: var(--color-on-primary);
     border-radius: var(--radius-full);
-    padding: 8px 12px;
+    padding: 6px 12px;
     font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     line-height: 1.2;
     letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-accent {
+    background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+    color: var(--color-on-primary);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+  }
+
+  /* Custom scrollbar utilities */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(59, 130, 246, 0.3) rgba(20, 27, 46, 0.5);
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: rgba(20, 27, 46, 0.5);
+    border-radius: var(--radius-sm);
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
   }
 }
 

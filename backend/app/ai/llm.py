@@ -11,12 +11,24 @@ Rules for this file:
 import json
 import logging
 import re
+import time
 
 import httpx
 
 from app import config
 
 logger = logging.getLogger("triplan.llm")
+
+# Fast JSON response format for structured output
+FAST_JSON_FORMAT = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": True,
+    },
+}
 
 
 class LLMError(Exception):

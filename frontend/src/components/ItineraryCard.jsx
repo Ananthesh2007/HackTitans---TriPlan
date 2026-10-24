@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion'
 import { formatMoney } from '../utils/format.js'
+import { staggerContainer, staggerItem } from '../lib/motion.js'
 
 // Shows one day of the itinerary: title, activities, times, places, and estimated costs.
 export default function ItineraryCard({ day, currency, people = 1 }) {
@@ -8,34 +10,45 @@ export default function ItineraryCard({ day, currency, people = 1 }) {
   const groupTotal = dayTotal * people
 
   return (
-    <article className="border-t border-line pt-4">
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="glass-panel p-6"
+    >
       <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xl font-black">
+        <h2 className="text-xl font-black text-slate-100">
           Day {day.day}: {day.title}
         </h2>
-        <p className="text-sm text-muted">
+        <p className="text-sm text-slate-400">
           Estimated activities cost: {formatMoney(groupTotal, currency)}
           {people > 1 ? ` (${formatMoney(dayTotal, currency)} per person)` : ''}
         </p>
       </header>
 
-      <ul className="mt-4 divide-y divide-line">
-        {day.activities.map((activity) => (
-          <li
+      <motion.ul
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="mt-4 divide-y divide-line scrollbar-custom"
+      >
+        {day.activities.map((activity, index) => (
+          <motion.li
             key={`${activity.time}-${activity.name}`}
-            className="grid grid-cols-[4rem_1fr] gap-x-4 py-3 sm:grid-cols-[4rem_1fr_auto]"
+            variants={staggerItem}
+            className="grid grid-cols-[4rem_1fr] gap-x-4 py-3 sm:grid-cols-[4rem_1fr_auto] hover:bg-slate-800/20 transition-colors rounded-md px-2 -mx-2"
           >
-            <span className="text-muted">{activity.time}</span>
+            <span className="text-accent font-semibold">{activity.time}</span>
             <div>
-              <p className="font-medium">{activity.name}</p>
-              <p className="text-sm text-muted">{activity.location}</p>
+              <p className="font-medium text-slate-100">{activity.name}</p>
+              <p className="text-sm text-slate-400">{activity.location}</p>
             </div>
-            <p className="col-start-2 mt-1 text-sm sm:col-start-3 sm:mt-0 sm:text-base">
+            <p className="col-start-2 mt-1 text-sm sm:col-start-3 sm:mt-0 sm:text-base font-semibold text-slate-200">
               {formatMoney(activity.estimated_cost * people, currency)}
             </p>
-          </li>
+          </motion.li>
         ))}
-      </ul>
-    </article>
+      </motion.ul>
+    </motion.article>
   )
 }

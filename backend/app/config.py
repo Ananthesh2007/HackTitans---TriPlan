@@ -17,9 +17,12 @@ FRONTEND_ORIGINS = [
 # to the frontend.
 # ------------------------------------------------------------------
 # "openai", "gemini" or "none" (forces the mock itinerary).
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").strip().lower()
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", os.getenv("AI_PROVIDER", "openai")).strip().lower()
 # The secret key. Leave empty to run in mock mode.
-LLM_API_KEY = os.getenv("LLM_API_KEY", "").strip()
+LLM_API_KEY = os.getenv("LLM_API_KEY", os.getenv("AI_API_KEY", "")).strip()
+AMADEUS_CLIENT_ID = os.getenv("AMADEUS_CLIENT_ID", os.getenv("AMADEUS_CLIENT_ID", "")).strip()
+AMADEUS_CLIENT_SECRET = os.getenv("AMADEUS_CLIENT_SECRET", os.getenv("AMADEUS_CLIENT_SECRET", "")).strip()
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", os.getenv("TAVILY_API_KEY", "")).strip()
 # Which model to call.
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini").strip()
 def _default_base_url() -> str:
@@ -30,7 +33,7 @@ def _default_base_url() -> str:
 # The API base URL. Different providers use different addresses.
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "").strip() or _default_base_url()
 # How long to wait for the provider before giving up (seconds).
-LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "45"))
+LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "15"))
 # How many tokens the model may use for one answer.
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "4000"))
 # Creativity. Lower values give more predictable JSON.
