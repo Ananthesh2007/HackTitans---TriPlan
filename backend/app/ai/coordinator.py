@@ -16,10 +16,13 @@ The backend never lets a provider problem become a server crash:
 
 import copy
 import logging
+import re
+import time
 import uuid
+from typing import Generator, List
 
 from app import config
-from app.ai.llm import LLMError, ask_for_json
+from app.ai.llm import LLMError, ask_for_json, stream_modification_answer
 from app.ai.prompts import (
     ITINERARY_RESPONSE_FORMAT,
     MODIFICATION_RESPONSE_FORMAT,
@@ -28,7 +31,6 @@ from app.ai.prompts import (
 )
 from app.models.trip import Activity, DayPlan, Trip
 from app.services.budget import estimate_budget
-from typing import List
 
 logger = logging.getLogger("triplan.coordinator")
 
@@ -105,7 +107,7 @@ def generate_itinerary(trip_request) -> Trip:
     return trip
 
 
-def modify_itinerary(current_trip: Trip, message: str) -> Trip:
+def modify_itinerary(current_trip: Trip, message: str, history: list | None = None) -> Trip:
     """Modify a trip itinerary from a natural-language request.
 
     Keeps the trip context (destination, budget, days, interests, diet) and
@@ -115,6 +117,7 @@ def modify_itinerary(current_trip: Trip, message: str) -> Trip:
     Args:
         current_trip: The trip being edited.
         message: What the user asked for.
+        history: Prior conversation turns.
 
     Returns:
         The proposed revised Trip.
@@ -129,7 +132,7 @@ def modify_itinerary(current_trip: Trip, message: str) -> Trip:
 
     try:
         answer = ask_for_json(
-            build_modification_prompt(current_trip, message),
+            build_modification_prompt(current_trip, message, history),
             response_format=MODIFICATION_RESPONSE_FORMAT,
         )
     except LLMError as exc:
@@ -150,6 +153,72 @@ def modify_itinerary(current_trip: Trip, message: str) -> Trip:
     trip.warning = None
 
     return trip
+
+
+def _chunk_reply(text: str) -> list[str]:
+    """Break reply text into small natural word/token units for streaming."""
+    return re.findall(r"\S+|\s+", text) or [text]
+
+
+def stream_modify_itinerary(
+    current_trip: Trip,
+    message: str,
+    history: list | None = None,
+) -> Generator[tuple[str, str | Trip], None, None]:
+    """Stream reply tokens and yield the final revised Trip plan.
+
+    Yields:
+        ("token", str): Token deltas for real-time assistant response display.
+        ("done", Trip): The proposed revised Trip object once complete.
+    """
+    if not config.is_ai_configured():
+        trip = copy.deepcopy(current_trip)
+        reply, warning = _mock_modification(trip, message)
+        trip.reply = reply
+        trip.warning = warning
+        trip.estimated_costs = estimate_budget(trip)
+
+        for chunk in _chunk_reply(reply):
+            yield ("token", chunk)
+            time.sleep(0.015)
+
+        yield ("done", trip)
+        return
+
+    try:
+        prompt = build_modification_prompt(current_trip, message, history)
+        generator = stream_modification_answer(
+            prompt,
+            response_format=MODIFICATION_RESPONSE_FORMAT,
+        )
+        while True:
+            try:
+                token = next(generator)
+                yield ("token", token)
+            except StopIteration as stop:
+                answer = stop.value
+                break
+
+        itinerary = _build_itinerary_from_answer(answer, current_trip.days)
+        trip = copy.deepcopy(current_trip)
+        trip.itinerary = itinerary
+        trip.estimated_costs = estimate_budget(trip)
+        trip.reply = str(answer.get("reply") or "Your trip has been updated.")
+        trip.warning = None
+        yield ("done", trip)
+    except (LLMError, PlanValidationError) as exc:
+        logger.warning("AI streaming modification failed, using mock change: %s", exc)
+        trip = copy.deepcopy(current_trip)
+        reply, warning = _mock_modification(trip, message)
+        trip.reply = reply
+        trip.warning = warning
+        trip.estimated_costs = estimate_budget(trip)
+
+        for chunk in _chunk_reply(reply):
+            yield ("token", chunk)
+            time.sleep(0.015)
+
+        yield ("done", trip)
 
 
 def validate_plan(trip: Trip) -> List[str]:
@@ -347,21 +416,21 @@ def _mock_modification(trip: Trip, message: str) -> tuple[str, str]:
     # Detect flight search queries and guide user to the flights page
     if any(word in lowered for word in ("flight", "flights", "fly", "airline", "indigo", "air india", "akasa")):
         return (
-            "To search for flights, please use the Flights page. You can find it in the booking options section below, or navigate to the Flights tab. The flight search works with filters for price, departure time, and more—no AI configuration needed!",
+            "You can compare real-time fares and schedules directly on our Flights page below. It lets you filter by price, departure window, and airline concessions without needing an AI key. Would you like me to recommend the best time of day to fly out?",
             None,
         )
 
     # Detect hotel search queries
     if any(word in lowered for word in ("hotel", "hotels", "accommodation", "stay", "room", "resort")):
         return (
-            "To search for hotels, please use the Hotels page. You can find it in the booking options section below, or navigate to the Hotels tab. The hotel search works with filters for price, check-in time, and amenities—no AI configuration needed!",
+            "Head over to our Hotels section right below to explore places to stay with filters for neighborhood, amenities, and nightly rates. What kind of vibe are you leaning towards for your stay—something central or a quiet retreat?",
             None,
         )
 
     # Detect transport search queries
     if any(word in lowered for word in ("bus", "buses", "train", "trains", "transport", "ksrtc", "redbus", "irctc")):
         return (
-            "To search for buses and trains, please use the Transport page. You can find it in the booking options section below, or navigate to the Transport tab. The search works with filters for AC/Non-AC, seating type, price, and more—no AI configuration needed!",
+            "Check out our Transport tab below to search buses and trains with AC, sleeper, and live-tracking filters. Are you looking for the fastest route or an overnight sleeper to save on travel time?",
             None,
         )
 
@@ -374,15 +443,15 @@ def _mock_modification(trip: Trip, message: str) -> tuple[str, str]:
                 target_cost = cost
                 target = (day_index, activity_index)
 
-    if target and any(word in lowered for word in ("remove", "drop", "delete", "skip", "less")):
+    if target and any(word in lowered for word in ("remove", "drop", "delete", "skip", "less", "cheaper")):
         day_index, activity_index = target
         removed = trip.itinerary[day_index].activities.pop(activity_index)
         return (
-            f"Removed '{removed.name}' from day {trip.itinerary[day_index].day} to reduce the cost.",
+            f"I've removed '{removed.name}' from day {trip.itinerary[day_index].day} to help lower your expenses. What other parts of the plan would you like to tweak?",
             "The AI service is not configured, so this change was made with a simple rule.",
         )
 
     return (
-        "The AI service is not configured for itinerary modifications. However, you can still search for flights, hotels, and transport using the dedicated search pages below—they work without any AI configuration!",
+        f"I've kept your itinerary handy while we chat. You can search flights, hotels, and transport anytime below. What else would you like to explore or adjust for your trip to {trip.destination}?",
         None,
     )

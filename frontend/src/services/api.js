@@ -108,18 +108,132 @@ export async function getTrip(tripId) {
 // POST /api/trips/{trip_id}/modify
 // Returns { reply, trip }, where trip is the PROPOSED plan. The page lets the user
 // review it before it replaces the current plan.
-export async function modifyTrip(tripId, message, currentTrip) {
+export async function modifyTrip(tripId, message, currentTrip, history = []) {
   if (isMockMode) {
     await wait(700)
     return mockModifyTrip(currentTrip)
   }
   const data = await request(`/api/trips/${encodeURIComponent(tripId)}/modify`, {
     method: 'POST',
-    body: JSON.stringify({ message, current_trip: currentTrip }),
+    body: JSON.stringify({ message, current_trip: currentTrip, history }),
   })
   return {
     reply: typeof data?.reply === 'string' ? data.reply : '',
     trip: assertTrip(data?.trip),
+  }
+}
+
+// Streams the assistant's reply tokens as they are generated, then returns { reply, trip }.
+export async function modifyTripStream(
+  tripId,
+  message,
+  currentTrip,
+  history = [],
+  onToken,
+  onDone,
+  onError,
+) {
+  if (isMockMode) {
+    try {
+      const result = mockModifyTrip(currentTrip)
+      const words = result.reply.match(/\S+|\s+/g) || [result.reply]
+      for (const word of words) {
+        onToken?.(word)
+        await wait(20)
+      }
+      onDone?.(result)
+      return result
+    } catch (err) {
+      onError?.(err)
+      throw err
+    }
+  }
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
+  try {
+    const response = await fetch(
+      `${API_URL}/api/trips/${encodeURIComponent(tripId)}/modify/stream`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message, current_trip: currentTrip, history }),
+        signal: controller.signal,
+      },
+    )
+
+    if (!response.ok) {
+      let errMsg = `The server returned status ${response.status}.`
+      try {
+        const body = await response.json()
+        if (body?.error?.message) errMsg = body.error.message
+      } catch {
+        // Keep default error text
+      }
+      throw new Error(errMsg)
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+    let finalResult = null
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n\n')
+      buffer = lines.pop()
+
+      for (const block of lines) {
+        if (!block.trim()) continue
+        const eventMatch = block.match(/^event:\s*(\w+)/m)
+        const dataMatch = block.match(/^data:\s*(.*)$/m)
+        const eventType = eventMatch ? eventMatch[1] : 'token'
+        const dataStr = dataMatch ? dataMatch[1] : ''
+
+        if (eventType === 'token' && dataStr) {
+          try {
+            const parsed = JSON.parse(dataStr)
+            if (parsed.delta) onToken?.(parsed.delta)
+          } catch {
+            onToken?.(dataStr)
+          }
+        } else if (eventType === 'done' && dataStr) {
+          const parsed = JSON.parse(dataStr)
+          finalResult = {
+            reply: typeof parsed?.reply === 'string' ? parsed.reply : '',
+            trip: assertTrip(parsed?.trip),
+          }
+          onDone?.(finalResult)
+        } else if (eventType === 'error' && dataStr) {
+          const parsed = JSON.parse(dataStr)
+          throw new Error(parsed?.message || 'Modification failed.')
+        }
+      }
+    }
+
+    if (!finalResult) {
+      const fallback = await modifyTrip(tripId, message, currentTrip, history)
+      onDone?.(fallback)
+      return fallback
+    }
+
+    return finalResult
+  } catch (caught) {
+    if (caught.name === 'AbortError') {
+      const timeoutError = new Error('The server took too long to respond. Try again.')
+      onError?.(timeoutError)
+      throw timeoutError
+    }
+    onError?.(caught)
+    throw caught
+  } finally {
+    clearTimeout(timer)
   }
 }
 

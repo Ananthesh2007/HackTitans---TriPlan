@@ -75,9 +75,15 @@ class Trip(BaseModel):
 
 
 # ---------- POST /api/trips/{trip_id}/modify ----------
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=2000)
+
+
 class ModifyRequest(BaseModel):
     message: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
     current_trip: Trip | None = None
+    history: list[ChatMessage] = Field(default_factory=list)
 
 
 class ModifyResponse(BaseModel):

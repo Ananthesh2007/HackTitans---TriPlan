@@ -1,9 +1,12 @@
+import json
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 
 from app.ai.coordinator import (
     PlanValidationError,
     generate_itinerary,
     modify_itinerary,
+    stream_modify_itinerary,
     validate_plan,
 )
 from app.errors import AppError
@@ -38,7 +41,7 @@ def create_trip(payload: TripRequest):
     # Save trip to database
     # Date: 20-10-2026 — Database persistence replaces in-memory storage
     # Never report a trip as saved if the database fails
-    saved = save_trip(trip.trip_id, trip.model_dump())
+    saved = save_trip(trip.trip_id, trip.model_dump(mode="json"))
     if not saved:
         # Database failed, but trip is in memory cache
         # Add a warning to the response
@@ -71,7 +74,7 @@ def modify_trip(trip_id: str, payload: ModifyRequest):
     current = Trip(**trip_data)
 
     try:
-        proposed = modify_itinerary(current, payload.message)
+        proposed = modify_itinerary(current, payload.message, payload.history)
     except PlanValidationError as exc:
         raise AppError(
             502,
@@ -97,12 +100,41 @@ def modify_trip(trip_id: str, payload: ModifyRequest):
 
     # Save modified trip to database
     # Date: 20-10-2026 — Save modifications to database
-    save_trip(proposed.trip_id, proposed.model_dump())
+    save_trip(proposed.trip_id, proposed.model_dump(mode="json"))
 
     return ModifyResponse(
         reply=proposed.reply or "Your trip has been updated based on your request.",
         trip=proposed,
     )
+
+
+@router.post("/{trip_id}/modify/stream")
+def modify_trip_stream(trip_id: str, payload: ModifyRequest):
+    """Stream assistant reply tokens and return the proposed revised trip itinerary."""
+    trip_data = get_trip(trip_id)
+    if not trip_data:
+        raise AppError(404, "trip_not_found", f"Trip '{trip_id}' not found.")
+
+    current = Trip(**trip_data)
+
+    def event_generator():
+        try:
+            for event_type, data in stream_modify_itinerary(current, payload.message, payload.history):
+                if event_type == "token":
+                    yield f"event: token\ndata: {json.dumps({'delta': data})}\n\n"
+                elif event_type == "done":
+                    proposed = data
+                    issues = validate_plan(proposed)
+                    if issues:
+                        yield f"event: error\ndata: {json.dumps({'message': 'The revised itinerary did not pass validation.', 'issues': issues})}\n\n"
+                        return
+                    proposed.estimated_costs = estimate_budget(proposed)
+                    save_trip(proposed.trip_id, proposed.model_dump(mode="json"))
+                    yield f"event: done\ndata: {json.dumps({'reply': proposed.reply or 'Your trip has been updated.', 'trip': proposed.model_dump(mode='json')})}\n\n"
+        except Exception as exc:
+            yield f"event: error\ndata: {json.dumps({'message': str(exc) or 'Could not modify itinerary.'})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.post("/{trip_id}/budget", response_model=dict)
