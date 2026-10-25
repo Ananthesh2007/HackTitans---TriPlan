@@ -175,9 +175,16 @@ class TestTripRetrieval:
 # POST /api/trips/{trip_id}/modify
 # --------------------------------------------------------------------------
 class TestTripModification:
-    def test_returns_a_reply_and_a_proposed_trip(self, client, created_trip):
+    def test_modify_with_conversation_history(self, client, created_trip):
         response = client.post(
-            f"/api/trips/{created_trip['trip_id']}/modify", json={"message": "make it cheaper"}
+            f"/api/trips/{created_trip['trip_id']}/modify",
+            json={
+                "message": "make that cheaper",
+                "history": [
+                    {"role": "user", "content": "Can we visit national parks?"},
+                    {"role": "assistant", "content": "Yes, we have added a nature walk on day 1."},
+                ],
+            },
         )
         assert response.status_code == 200
         body = response.json()

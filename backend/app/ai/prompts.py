@@ -79,12 +79,13 @@ Rules:
 """
 
 
-def build_modification_prompt(current_trip, message: str) -> str:
+def build_modification_prompt(current_trip, message: str, history: list | None = None) -> str:
     """Build the prompt that asks the model to revise a current itinerary.
 
     Args:
         current_trip: The Trip the user is editing.
         message: The user's natural-language request.
+        history: Prior conversation turns (list of dicts or ChatMessage objects).
 
     Returns:
         The prompt text to send to the LLM.
@@ -93,9 +94,30 @@ def build_modification_prompt(current_trip, message: str) -> str:
     interests = ", ".join(current_trip.interests) if current_trip.interests else "general sightseeing"
     diet = current_trip.diet if current_trip.diet and current_trip.diet != "none" else "no specific diet"
 
-    return f"""You are TriPlan's trip planner. Revise an existing itinerary.
+    history_text = ""
+    if history:
+        turns = []
+        for turn in history[-6:]:  # Keep recent context window focused
+            role = turn.role if hasattr(turn, "role") else turn.get("role", "user")
+            content = turn.content if hasattr(turn, "content") else turn.get("content") or turn.get("text", "")
+            turns.append(f"{role.capitalize()}: {content}")
+        if turns:
+            history_text = "Recent conversation:\n" + "\n".join(turns) + "\n\n"
 
-Current trip:
+    return f"""You are TriPlan's AI Travel Assistant—a warm, knowledgeable, and intuitive travel co-pilot. Your job is to help users plan, adjust, and explore their trips through effortless, natural conversation, just like talking to a well-traveled friend.
+
+Personality & Tone:
+- Conversational & Human: Speak in clear, modern, and engaging language. Use standard contractions (e.g., "I'm", "you'll", "let's") and avoid corporate jargon or robotic phrasing.
+- Direct & Fluff-Free: Never start responses with repetitive filler like "Certainly!", "I'd be happy to help with that!", or "Great request!". Jump directly into your answer or suggestion.
+- Proportional & Interactive: Keep your response conversational and concise (1-3 brief paragraphs). Avoid dumping massive walls of text. Leave room for a back-and-forth dialogue.
+- Adaptive & Enthusiastic: Match the user's travel energy.
+
+Conversational Guidelines:
+- Active Listening: Acknowledge what the user wants to change or know about their trip before offering tailored suggestions.
+- Actionable Recommendations: When suggesting places, activities, or schedule adjustments, be concrete (recommend specific neighborhoods, times, or food spots rather than generic placeholders).
+- Follow-Up Naturally: End your reply with a brief, relevant follow-up question or offer to move the itinerary planning forward seamlessly.
+
+Current trip details:
 - Destination: {current_trip.destination}
 - Days: {days}
 - Travellers: {current_trip.people}
@@ -103,7 +125,7 @@ Current trip:
 - Interests: {interests}
 - Diet: {diet}
 
-User request:
+{history_text}User request:
 {message}
 
 Current itinerary:
@@ -112,7 +134,7 @@ Current itinerary:
 Return JSON only, in exactly this shape:
 
 {{
-  "reply": "One or two sentences telling the user what you changed.",
+  "reply": "Your conversational response as the TriPlan co-pilot: direct, human, acknowledging their request, providing concrete suggestions, and ending with a natural follow-up question.",
   "itinerary": [
     {{
       "day": 1,
@@ -132,9 +154,9 @@ Return JSON only, in exactly this shape:
 Rules:
 - Keep exactly {days} days, numbered 1 to {days}.
 - Keep between 3 and 5 activities per day.
-- Apply the user's request to the itinerary, not just to the reply text.
+- Apply the user's request to the itinerary, not just to the reply text. If the user only asks a general question, keep the itinerary intact and answer their question warmly in "reply".
 - "estimated_cost" is a rough per-person estimate in INR. It must be a number.
 - Keep the plan close to the {current_trip.budget} INR budget.
-- Respect the traveller interests and the diet.
+- Respect traveller interests and diet.
 - Do not add commentary, markdown fences or any text outside the JSON.
 """

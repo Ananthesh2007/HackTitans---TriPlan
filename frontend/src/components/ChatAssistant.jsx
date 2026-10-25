@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { modifyTrip } from '../services/api.js'
+import { modifyTripStream } from '../services/api.js'
 import { diffTrips } from '../utils/diffTrips.js'
 import { formatMoney } from '../utils/format.js'
 import { fadeInProps, staggerContainer, staggerItem } from '../lib/motion.js'
 
 const MAX_LENGTH = 500
+
+const SUGGESTIONS = [
+  '✨ Make it cheaper',
+  '🌿 Add relaxing nature spots',
+  '🍲 Recommend local food spots',
+  '🧳 What should I pack for this trip?',
+]
 
 function ChangeList({ diff, currency }) {
   const hasTotals = diff.totalBefore !== null && diff.totalAfter !== null
@@ -65,48 +72,93 @@ function ChangeList({ diff, currency }) {
   )
 }
 
-// Lets the user ask for changes. The assistant only proposes a new plan.
-// Nothing changes until the user chooses Apply.
+// Conversational AI co-pilot that helps users plan, adjust, and explore their trip.
 export default function ChatAssistant({ trip, onApply }) {
   const [messages, setMessages] = useState([])
+  const [streamingText, setStreamingText] = useState('')
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [proposal, setProposal] = useState(null)
+  const messagesEndRef = useRef(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, streamingText, isSending])
 
   async function handleSubmit(event) {
-    event.preventDefault()
+    if (event) event.preventDefault()
     if (isSending || proposal) return
 
     const message = input.trim()
     if (!message) {
-      setError('Type what you want to change.')
+      setError('Type what you want to change or ask.')
       return
     }
 
     setIsSending(true)
+    setStreamingText('')
     setError('')
     setNotice('')
 
-    try {
-      const result = await modifyTrip(trip.trip_id, message, trip)
-      const diff = diffTrips(trip, result.trip)
-      const reply =
-        result.reply || (diff.hasChanges ? 'Here is a proposed change.' : 'No changes were needed.')
+    const nextMessages = [...messages, { role: 'user', text: message }]
+    setMessages(nextMessages)
+    setInput('')
 
-      setMessages((current) => [
-        ...current,
-        { role: 'user', text: message },
-        { role: 'assistant', text: reply },
-      ])
-      setInput('')
-      if (diff.hasChanges) setProposal({ trip: result.trip, diff })
+    const history = messages.map((m) => ({
+      role: m.role,
+      content: m.text,
+    }))
+
+    try {
+      let accumulatedReply = ''
+      await modifyTripStream(
+        trip.trip_id,
+        message,
+        trip,
+        history,
+        (token) => {
+          accumulatedReply += token
+          setStreamingText(accumulatedReply)
+        },
+        (doneResult) => {
+          const diff = diffTrips(trip, doneResult.trip)
+          const finalReply =
+            doneResult.reply ||
+            accumulatedReply ||
+            (diff.hasChanges ? 'Here is a proposed change.' : 'No changes were needed.')
+
+          setMessages([...nextMessages, { role: 'assistant', text: finalReply }])
+          setStreamingText('')
+          if (diff.hasChanges) setProposal({ trip: doneResult.trip, diff })
+        },
+        (err) => {
+          setError(err.message || 'Something went wrong. Please try again.')
+          setStreamingText('')
+        },
+      )
     } catch (caught) {
-      setError(caught.message)
+      setError(caught.message || 'Could not connect to the assistant.')
+      setStreamingText('')
     } finally {
       setIsSending(false)
     }
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      handleSubmit(event)
+    }
+  }
+
+  function handleClearChat() {
+    setMessages([])
+    setStreamingText('')
+    setError('')
+    setProposal(null)
+    setNotice('Conversation cleared.')
   }
 
   function handleApply() {
@@ -127,42 +179,85 @@ export default function ChatAssistant({ trip, onApply }) {
       aria-labelledby="assistant-heading"
       className="max-w-xl"
     >
-      <h2 id="assistant-heading" className="text-xl font-black text-slate-100">
-        Change this plan
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 id="assistant-heading" className="text-xl font-black text-slate-100">
+          Trip Co-Pilot
+        </h2>
+        {messages.length > 0 && !isSending && !proposal && (
+          <button
+            type="button"
+            onClick={handleClearChat}
+            className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            Clear conversation
+          </button>
+        )}
+      </div>
+
       <p className="mt-2 text-sm text-slate-400">
-        Ask for a change in your own words. The assistant suggests a new plan, and nothing changes
-        until you choose Apply.
+        Chat naturally with your AI travel co-pilot to tweak activities, reduce costs, or explore recommendations.
       </p>
       {trip.is_mock && (
-        <p className="mt-2 text-sm text-slate-400">
-          Sample mode: replies are made up for testing and are not from a real AI.
+        <p className="mt-1 text-xs text-slate-500">
+          Sample mode: simulated co-pilot responses for testing.
         </p>
       )}
 
-      <AnimatePresence mode="wait">
-        {messages.length > 0 && (
+      <AnimatePresence mode="popLayout">
+        {(messages.length > 0 || isSending) && (
           <motion.div
             role="log"
             aria-live="polite"
-            className="mt-4 space-y-3 glass-panel p-4 scrollbar-custom max-h-80 overflow-y-auto"
+            className="mt-4 space-y-3 glass-panel p-4 scrollbar-custom max-h-96 overflow-y-auto"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
           >
             {messages.map((message, index) => (
-              <motion.p
+              <motion.div
                 key={index}
-                initial={{ opacity: 0, x: message.role === 'user' ? 20 : -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className={message.role === 'user' ? 'text-slate-100' : 'text-slate-300'}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}
               >
-                <span className="font-medium text-accent">
-                  {message.role === 'user' ? 'You: ' : 'Assistant: '}
+                <span className="text-xs font-semibold mb-1 text-slate-400">
+                  {message.role === 'user' ? 'You' : 'TriPlan Co-Pilot'}
                 </span>
-                {message.text}
-              </motion.p>
+                <div
+                  className={`rounded-2xl p-3.5 text-sm leading-relaxed whitespace-pre-wrap max-w-[90%] ${
+                    message.role === 'user'
+                      ? 'bg-accent/15 border border-accent/30 text-slate-100 rounded-tr-sm'
+                      : 'bg-surface/90 border border-slate-700/60 text-slate-200 rounded-tl-sm'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              </motion.div>
             ))}
+
+            {isSending && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-start"
+              >
+                <span className="text-xs font-semibold mb-1 text-accent flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-accent animate-ping" />
+                  TriPlan Co-Pilot
+                </span>
+                <div className="bg-surface/90 border border-slate-700/60 text-slate-200 rounded-2xl rounded-tl-sm p-3.5 text-sm leading-relaxed whitespace-pre-wrap max-w-[90%]">
+                  {streamingText ? (
+                    <>
+                      {streamingText}
+                      <span className="inline-block w-1.5 h-4 ml-1 bg-accent animate-pulse align-middle" />
+                    </>
+                  ) : (
+                    <span className="text-slate-400 italic">Thinking...</span>
+                  )}
+                </div>
+              </motion.div>
+            )}
+            <div ref={messagesEndRef} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -213,9 +308,27 @@ export default function ChatAssistant({ trip, onApply }) {
         )}
       </AnimatePresence>
 
-      <form onSubmit={handleSubmit} noValidate className="mt-4">
-        <label htmlFor="chat-input" className="block font-medium">
-          What would you like to change?
+      {!isSending && !proposal && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => {
+                const text = suggestion.replace(/^[^\w]+/, '').trim()
+                setInput(text)
+              }}
+              className="text-xs px-2.5 py-1 rounded-full bg-surface border border-slate-700/80 hover:border-accent/60 text-slate-300 hover:text-slate-100 transition-colors"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} noValidate className="mt-3">
+        <label htmlFor="chat-input" className="block font-medium text-sm text-slate-200">
+          Message Co-Pilot
         </label>
         <textarea
           id="chat-input"
@@ -223,14 +336,15 @@ export default function ChatAssistant({ trip, onApply }) {
           maxLength={MAX_LENGTH}
           value={input}
           disabled={isSending || Boolean(proposal)}
+          onKeyDown={handleKeyDown}
           onChange={(event) => {
             setInput(event.target.value)
             if (error) setError('')
           }}
-          placeholder="For example, make this trip cheaper"
+          placeholder="Ask a question or request a change (e.g. 'Can we visit local viewpoints on day 2?')"
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? 'chat-error' : undefined}
-          className="input mt-2 disabled:opacity-60"
+          className="input mt-1.5 disabled:opacity-60"
         />
         {error && (
           <p id="chat-error" role="alert" className="mt-1 text-sm text-error">
@@ -239,18 +353,23 @@ export default function ChatAssistant({ trip, onApply }) {
         )}
         {proposal && (
           <p className="mt-1 text-sm text-muted">
-            Apply or keep the current plan before asking for another change.
+            Apply or keep the current plan before sending another message.
           </p>
         )}
-        <motion.button
-          type="submit"
-          disabled={isSending || Boolean(proposal)}
-          className="btn btn-primary mt-3"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {isSending ? 'Sending...' : 'Send'}
-        </motion.button>
+        <div className="flex items-center justify-between mt-3">
+          <span className="text-xs text-slate-500">
+            Press <kbd className="px-1.5 py-0.5 rounded bg-surface border border-slate-700 text-slate-300">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 rounded bg-surface border border-slate-700 text-slate-300">Shift + Enter</kbd> for new line
+          </span>
+          <motion.button
+            type="submit"
+            disabled={isSending || Boolean(proposal)}
+            className="btn btn-primary"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {isSending ? 'Sending...' : 'Send'}
+          </motion.button>
+        </div>
       </form>
     </motion.section>
   )

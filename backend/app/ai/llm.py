@@ -12,6 +12,7 @@ import json
 import logging
 import re
 import time
+from typing import Generator
 
 import httpx
 
@@ -154,6 +155,175 @@ def chat_completion(
         raise LLMError("The AI provider returned an empty answer.")
 
     return content
+
+
+def stream_chat_completion(
+    messages: list[dict],
+    response_format: dict | None = None,
+    temperature: float | None = None,
+) -> Generator[str, None, str]:
+    """Stream chat completion chunks from the provider.
+
+    Yields each delta token text as it arrives, and returns the complete text.
+
+    Raises:
+        LLMError: on provider error or timeout.
+    """
+    if not config.is_ai_configured():
+        raise LLMError("No AI provider is configured.")
+
+    url = f"{config.LLM_BASE_URL.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {config.LLM_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    body = {
+        "model": config.LLM_MODEL,
+        "messages": messages,
+        "temperature": config.LLM_TEMPERATURE if temperature is None else temperature,
+        "max_tokens": config.LLM_MAX_TOKENS,
+        "stream": True,
+    }
+    if response_format:
+        body["response_format"] = response_format
+
+    full_chunks = []
+    try:
+        with httpx.Client(timeout=config.LLM_TIMEOUT_SECONDS) as client:
+            with client.stream("POST", url, headers=headers, json=body) as response:
+                if response.status_code >= 400:
+                    logger.warning("AI provider streaming returned HTTP %s", response.status_code)
+                    raise LLMError(f"The AI provider returned an error (HTTP {response.status_code}).")
+
+                for line in response.iter_lines():
+                    if not line:
+                        continue
+                    line = line.strip()
+                    if not line.startswith("data:"):
+                        continue
+                    data_str = line[5:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        data = json.loads(data_str)
+                        delta = data.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                        if delta:
+                            full_chunks.append(delta)
+                            yield delta
+                    except (json.JSONDecodeError, IndexError, KeyError):
+                        continue
+    except httpx.TimeoutException as exc:
+        raise LLMError(f"The AI provider did not answer in time: {exc}") from exc
+    except httpx.HTTPError as exc:
+        raise LLMError(f"Could not reach the AI provider: {exc}") from exc
+
+    full_text = "".join(full_chunks)
+    if not full_text.strip():
+        raise LLMError("The AI provider returned an empty answer.")
+    return full_text
+
+
+def stream_modification_answer(
+    prompt: str,
+    response_format: dict | None = None,
+    temperature: float | None = None,
+) -> Generator[str, None, dict]:
+    """Stream the 'reply' part of the JSON response token-by-token.
+
+    Yields string deltas for the conversational reply to send to the UI.
+    Returns the parsed full JSON dict upon completion.
+    """
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are TriPlan's AI Travel Assistant. "
+                "You always answer with a single JSON object containing 'reply' and 'itinerary'."
+            ),
+        },
+        {"role": "user", "content": prompt},
+    ]
+
+    generator = stream_chat_completion(messages, response_format=response_format, temperature=temperature)
+
+    full_text_list = []
+    in_reply = False
+    reply_done = False
+    buffer = ""
+    escaped = False
+    yielded_any = False
+
+    while True:
+        try:
+            token = next(generator)
+        except StopIteration as stop:
+            full_text = stop.value or "".join(full_text_list)
+            break
+
+        full_text_list.append(token)
+
+        if reply_done:
+            continue
+
+        buffer += token
+
+        if not in_reply:
+            match = re.search(r'"reply"\s*:\s*"', buffer)
+            if match:
+                in_reply = True
+                buffer = buffer[match.end():]
+            else:
+                if len(buffer) > 40:
+                    buffer = buffer[-40:]
+                continue
+
+        if in_reply and not reply_done:
+            emit_chars = []
+            idx = 0
+            while idx < len(buffer):
+                char = buffer[idx]
+                if escaped:
+                    escaped = False
+                    if char == "n":
+                        emit_chars.append("\n")
+                    elif char == "t":
+                        emit_chars.append("\t")
+                    elif char == '"':
+                        emit_chars.append('"')
+                    elif char == "\\":
+                        emit_chars.append("\\")
+                    else:
+                        emit_chars.append(char)
+                    idx += 1
+                    continue
+
+                if char == "\\":
+                    escaped = True
+                    idx += 1
+                    continue
+
+                if char == '"':
+                    reply_done = True
+                    buffer = ""
+                    break
+
+                emit_chars.append(char)
+                idx += 1
+
+            if not reply_done:
+                buffer = ""
+
+            if emit_chars:
+                chunk = "".join(emit_chars)
+                yielded_any = True
+                yield chunk
+
+    parsed = parse_json_answer(full_text)
+    # Fallback: if token extraction didn't yield the reply during stream, yield it at the end
+    if not yielded_any and parsed.get("reply"):
+        yield str(parsed.get("reply"))
+
+    return parsed
 
 
 def ask_for_json(
