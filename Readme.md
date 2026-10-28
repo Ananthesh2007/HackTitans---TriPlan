@@ -13,6 +13,12 @@ cp .env.example .env
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 
+#or
+python -m venv .venv #download .venv if not installed or else backend will not run (Using python 3.13.16)
+.\.venv\Scripts\Activate.ps1   # Windows PowerShell
+pip install -r requirements.txt
+uvicorn app.main:app --reload # after doing all the above steps run this
+
 # Frontend (separate terminal)
 cd frontend
 npm install
@@ -631,3 +637,7 @@ When assisting:
 12. When a service requires credentials or approval, explain how to obtain access and provide a safe placeholder or mock mode for development.
 13. Help the team integrate incrementally, test each feature, and deploy the final prototype.
 14. Use the project name **TriPlan** in new code and documentation.
+
+## Note
+
+For now we are using only geniune hotels, flights, buses and trains and no local shops.
