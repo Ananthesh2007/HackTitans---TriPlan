@@ -2,8 +2,6 @@
 
 **Project type:** Agentic AI Travel Planner  
 **Team size:** 3 members  
-**Development status:** MVP Complete (Day 28 of 30)  
-**Last updated:** October 24, 2024  
 **Primary goal:** Build a website that generates and modifies personalised travel itineraries, estimates trip expenses, and helps users search flights and hotels with external booking redirection.
 
 ## Quick Start
