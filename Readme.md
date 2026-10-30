@@ -39,7 +39,7 @@ TriPlan is an AI-powered travel-planning website that helps users plan a trip in
 
 For flight and hotel bookings, the prototype can redirect users to verified airline, hotel, or authorised booking-provider websites. The external provider handles the actual reservation, payment, and confirmation.
 
-### Current Status (October 2024)
+### Current Status 
 
 ✅ **Fully Functional MVP** - Core trip planning, AI chat, and booking workflows complete  
 ✅ **Ocean Wanderlust UI** - Modern glassmorphic design with Framer Motion animations  
@@ -552,18 +552,6 @@ These are proposed API formats. The team must agree on exact schemas before inte
 - [ ] User authentication and accounts
 - [ ] Persistent database with saved trips
 
-### Final Delivery ✅ COMPLETE
-
-- [x] Test all main features (28 backend tests passing)
-- [x] Secure API keys (all in .env, never committed)
-- [x] Validate external URLs (https-only booking links)
-- [x] Frontend build optimized (191kB gzipped)
-- [x] Backend optimized (15s timeout, real data fallbacks)
-- [x] Comprehensive documentation (4 README files + 2 refactor docs)
-- [x] Architecture and API contract documented
-- [ ] Deploy frontend and backend (ready, not deployed)
-- [ ] Prepare presentation and demo (ready for delivery)
-
 ## 13. Testing Plan
 
 | Test case                       | Expected result                                  |
@@ -617,26 +605,6 @@ An AI trip planner with flight and hotel booking redirection. Users can create a
 
 The main development objective is to make the end-to-end trip-planning workflow functional, rather than attempting every advanced feature at once. Flight and hotel redirection lets TriPlan support reservations without building its own payment or ticketing system.
 
-## 16. Instructions for Claude
-
-Act as a senior full-stack developer and technical mentor helping a beginner team of three engineering students build TriPlan in 30 days.
-
-When assisting:
-
-1. Follow this project plan and preserve the core scope.
-2. Explain tasks in a beginner-friendly, step-by-step way without skipping setup details.
-3. Assign tasks to Member 1 (frontend), Member 2 (backend), and Member 3 (AI).
-4. Provide complete, runnable code files when requested, with exact file paths.
-5. State required installations, terminal commands, environment variables, and how to run and test the code.
-6. Keep API contracts consistent across frontend and backend.
-7. Never expose API keys in frontend code or commit secrets to GitHub.
-8. Use provider-backed data for live flights, hotel rates, weather, routes, and availability. Never fabricate live results.
-9. Keep flight and hotel booking external unless an authorised provider integration is specifically implemented.
-10. Prioritise a working MVP before advanced features.
-11. Explain dependencies between team members and define a testable end-of-day deliverable for each task.
-12. When a service requires credentials or approval, explain how to obtain access and provide a safe placeholder or mock mode for development.
-13. Help the team integrate incrementally, test each feature, and deploy the final prototype.
-14. Use the project name **TriPlan** in new code and documentation.
 
 ## Note
 
